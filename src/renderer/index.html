@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>ScriptManager</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d11;--surface:#13161d;--panel:#191c25;--card:#1e2230;
+  --border:#252a36;--border2:#2e3545;
+  --text:#c8d0e0;--muted:#5a6480;--muted2:#3d4560;
+  --accent:#4af0a0;--accent2:#0aff6e;
+  --node:#f7df1e;--python:#3b9de0;--danger:#ff4466;--warn:#ffaa33;--purple:#a78bfa;
+  --font-mono:'JetBrains Mono',monospace;--font-ui:'Syne',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-ui);overflow:hidden;user-select:none;}
+
+/* ── Titlebar ── */
+#titlebar{-webkit-app-region:drag;display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:800;letter-spacing:.04em;color:var(--accent);}
+.logo svg{width:20px;height:20px;}
+.logo .sub{color:var(--muted);font-weight:400;font-size:12px;}
+.winbtns{-webkit-app-region:no-drag;display:flex;gap:8px;}
+.winbtn{width:13px;height:13px;border-radius:50%;border:none;cursor:pointer;opacity:.7;transition:opacity .15s;}
+.winbtn:hover{opacity:1;}
+.winbtn.close{background:#ff5f57;}.winbtn.min{background:#febc2e;}.winbtn.max{background:#28c840;}
+
+/* ── Shell ── */
+#app{display:flex;flex-direction:column;height:100vh;}
+#main{display:flex;flex:1;overflow:hidden;}
+
+/* ── Sidebar ── */
+#sidebar{width:224px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:14px 0;}
+.nav-sect{padding:0 16px 7px;font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all .15s;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--text);background:rgba(74,240,160,.04);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(74,240,160,.07);}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:rgba(74,240,160,.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:var(--font-mono);}
+.sidebar-spacer{flex:1;}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;font-family:var(--font-mono);color:var(--muted);}
+
+/* ── Content ── */
+#content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column;}
+.page.active{display:flex;}
+
+/* ── Page header ── */
+.phdr{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.phdr h2{font-size:15px;font-weight:800;}
+.phdr-r{display:flex;gap:8px;align-items:center;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font-ui);font-size:12px;font-weight:700;transition:all .15s;white-space:nowrap;}
+.btn svg{width:13px;height:13px;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2);}
+.btn-ghost:hover{color:var(--text);background:rgba(255,255,255,.04);}
+.btn-danger{background:rgba(255,68,102,.12);color:var(--danger);border:1px solid rgba(255,68,102,.25);}
+.btn-danger:hover{background:rgba(255,68,102,.22);}
+.btn-git{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.25);}
+.btn-git:hover{background:rgba(167,139,250,.22);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:4px;}
+
+/* ── Icon buttons ── */
+.ibtn{width:28px;height:28px;border-radius:5px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s;flex-shrink:0;}
+.ibtn svg{width:13px;height:13px;}
+.ibtn:hover{color:var(--text);background:rgba(255,255,255,.05);}
+.ibtn.start:hover{color:var(--accent);border-color:var(--accent);}
+.ibtn.stop:hover{color:var(--danger);border-color:var(--danger);}
+.ibtn.del:hover{color:var(--danger);border-color:var(--danger);}
+.ibtn.git:hover{color:var(--purple);border-color:var(--purple);}
+.ibtn.con:hover{color:var(--node);border-color:var(--node);}
+
+/* ── Stats row ── */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:18px 22px 14px;flex-shrink:0;}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 16px;}
+.sc .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.sc .val{font-size:26px;font-weight:800;margin-top:3px;}
+.val.green{color:var(--accent);}.val.yellow{color:var(--node);}.val.red{color:var(--danger);}.val.blue{color:var(--python);}
+
+/* ── Dashboard ── */
+#page-dashboard{overflow-y:auto;}
+.dash-wrap{padding:0 22px 22px;}
+.dash-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.dash-box table{width:100%;border-collapse:collapse;}
+.dash-box thead th{padding:8px 14px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);text-align:left;background:var(--panel);}
+.dash-box tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+.dash-box tbody tr:last-child{border-bottom:none;}
+.dash-box tbody tr:hover{background:rgba(74,240,160,.025);}
+.dash-box td{padding:10px 14px;font-size:13px;vertical-align:middle;}
+
+/* ── Scripts page ── */
+#page-scripts{overflow:hidden;}
+.stbl-wrap{flex:1;overflow-y:auto;}
+table.st{width:100%;border-collapse:collapse;}
+table.st thead th{text-align:left;padding:9px 16px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:2;}
+table.st tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+table.st tbody tr:hover{background:rgba(74,240,160,.02);}
+table.st td{padding:9px 16px;font-size:12px;vertical-align:middle;}
+.name-cell{font-weight:700;font-size:13px;}
+.path-cell{font-family:var(--font-mono);font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.act-cell{display:flex;gap:4px;align-items:center;}
+.no-row td{text-align:center;padding:56px;color:var(--muted);}
+
+/* ── CPU/RAM chips ── */
+.stat-chip{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.04);border:1px solid var(--border2);}
+.stat-chip.cpu{color:var(--node);}
+.stat-chip.mem{color:var(--python);}
+.stat-chip.na{color:var(--muted);opacity:.5;}
+
+/* ── Uptime ── */
+.uptime-cell{font-family:var(--font-mono);font-size:11px;color:var(--muted);}
+
+/* ── Crash badge ── */
+.crash-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:4px;}
+.crash-badge.none{color:var(--muted);background:transparent;}
+.crash-badge.some{color:var(--warn);background:rgba(255,170,51,.1);border:1px solid rgba(255,170,51,.2);}
+.crash-badge.many{color:var(--danger);background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);}
+
+/* ── Type/status badges ── */
+.tb{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--font-mono);}
+.tb-node{background:rgba(247,223,30,.1);color:var(--node);border:1px solid rgba(247,223,30,.2);}
+.tb-python{background:rgba(59,157,224,.1);color:var(--python);border:1px solid rgba(59,157,224,.2);}
+.tb-shell{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
+.tb-batch{background:rgba(255,170,51,.1);color:var(--warn);border:1px solid rgba(255,170,51,.2);}
+.tb-other{background:rgba(90,100,128,.1);color:var(--muted);border:1px solid rgba(90,100,128,.2);}
+
+.sdot{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;}
+.sdot::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.s-running{color:var(--accent);}.s-running::before{background:var(--accent);box-shadow:0 0 5px var(--accent);animation:pulse 2s infinite;}
+.s-stopped{color:var(--muted);}.s-stopped::before{background:var(--muted);}
+.s-crashed{color:var(--danger);}.s-crashed::before{background:var(--danger);box-shadow:0 0 5px var(--danger);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.cron-tag{font-size:11px;font-family:var(--font-mono);color:var(--warn);background:rgba(255,170,51,.1);border:1px solid rgba(255,170,51,.2);padding:2px 6px;border-radius:4px;}
+
+/* ── Console panel (split) ── */
+#page-console{overflow:hidden;}
+.con-header{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.con-header h2{font-size:15px;font-weight:800;margin-right:4px;}
+#con-select{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font-ui);font-size:13px;cursor:pointer;outline:none;}
+.con-body{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#con-output{flex:1;overflow-y:auto;padding:12px 18px;font-family:var(--font-mono);font-size:12px;line-height:1.75;background:var(--bg);}
+.con-input-row{display:flex;gap:8px;padding:10px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+#con-input{flex:1;background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:6px;font-family:var(--font-mono);font-size:12px;outline:none;transition:border-color .15s;}
+#con-input:focus{border-color:var(--accent);}
+#con-input::placeholder{color:var(--muted);}
+.ll{display:block;white-space:pre-wrap;word-break:break-all;}
+.ll-err{color:#ff6b8a;}.ll-sys{color:var(--accent);font-weight:600;}.ll-in{color:var(--node);}
+.ll-ts{color:var(--muted);margin-right:8px;user-select:none;}
+.ll-empty{color:var(--muted);font-style:italic;text-align:center;margin-top:48px;}
+
+/* ── Logs ── */
+#page-logs{overflow:hidden;}
+.logs-bar{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.logs-bar h2{font-size:15px;font-weight:800;}
+select.lsel{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-family:var(--font-ui);font-size:13px;cursor:pointer;outline:none;}
+#log-out{flex:1;overflow-y:auto;padding:12px 18px;font-family:var(--font-mono);font-size:12px;line-height:1.75;background:var(--bg);}
+
+/* ── Modal ── */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;}
+.moverlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--panel);border:1px solid var(--border2);border-radius:12px;width:620px;max-height:92vh;overflow-y:auto;transform:translateY(18px) scale(.97);transition:transform .2s;box-shadow:0 40px 100px rgba(0,0,0,.7);}
+.moverlay.open .modal{transform:translateY(0) scale(1);}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:17px 22px;border-bottom:1px solid var(--border);}
+.mhdr h3{font-size:15px;font-weight:800;}
+.mbody{padding:20px 22px;display:flex;flex-direction:column;gap:14px;}
+.mfoot{padding:13px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+/* ── Form ── */
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.fg .hint{font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:3px;line-height:1.4;}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+input[type=text],select,textarea{background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:8px 11px;border-radius:6px;font-family:var(--font-ui);font-size:13px;outline:none;transition:border-color .15s;width:100%;}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:12px;}
+.irow{display:flex;gap:8px;}.irow input,.irow select{flex:1;}
+
+/* ── Toggle ── */
+.tgl-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.tgl-info .tgl-t{font-size:13px;font-weight:700;}
+.tgl-info .tgl-d{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.tgl{position:relative;width:52px;height:28px;flex-shrink:0;margin-top:2px;}
+.tgl input{opacity:0;width:0;height:0;position:absolute;}
+.tgl-sl{position:absolute;inset:0;background:var(--border2);border-radius:28px;cursor:pointer;transition:background .25s,box-shadow .25s;}
+.tgl-sl::before{content:'';position:absolute;width:20px;height:20px;left:4px;top:4px;background:#6b7a9a;border-radius:50%;transition:transform .25s,background .25s;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.tgl input:checked+.tgl-sl{background:var(--accent);box-shadow:0 0 10px rgba(74,240,160,.35);}
+.tgl input:checked+.tgl-sl::before{transform:translateX(24px);background:#fff;}
+.tgl input:disabled+.tgl-sl{cursor:not-allowed;}
+.tgl input:disabled+.tgl-sl::before{background:#3d4560;}
+
+/* ── Env editor ── */
+.env-ed{display:flex;flex-direction:column;gap:6px;}
+.env-row{display:flex;gap:6px;align-items:center;}
+.env-row input{flex:1;min-width:0;}
+.env-eq{color:var(--muted);font-family:var(--font-mono);font-weight:700;}
+.xbtn{background:transparent;border:1px solid var(--border2);color:var(--muted);width:26px;height:26px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.xbtn:hover{color:var(--danger);border-color:var(--danger);}
+.xbtn svg{width:12px;height:12px;}
+
+.mdiv{border:none;border-top:1px solid var(--border);margin:2px 0;}
+.msect{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-bottom:2px;border-bottom:1px solid var(--border);}
+
+/* ── Settings ── */
+#page-settings{overflow-y:auto;padding:22px;gap:14px;flex-direction:column;align-items:stretch;}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;width:100%;min-width:0;}
+.scard h3{font-size:14px;font-weight:700;margin-bottom:12px;}
+.ref-tbl{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;}
+.ref-tbl td{padding:4px 0;vertical-align:top;}
+.ref-tbl td:first-child{color:var(--accent);padding-right:18px;white-space:nowrap;}
+.ref-tbl td:last-child{color:var(--muted);}
+.build-steps{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+.build-step{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:var(--font-mono);font-size:12px;}
+.build-step .step-num{color:var(--muted);margin-right:10px;}
+.build-step .step-cmd{color:var(--accent);}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Titlebar -->
+<div id="titlebar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3" stroke-width="1.5"/><path d="M13 14h4" stroke-width="1.5"/></svg>
+    ScriptManager <span class="sub">v1.2</span>
+  </div>
+  <div class="winbtns">
+    <button class="winbtn min"   onclick="window.api.minimize()"></button>
+    <button class="winbtn max"   onclick="window.api.maximize()"></button>
+    <button class="winbtn close" onclick="window.api.close()"></button>
+  </div>
+</div>
+
+<div id="main">
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="nav-sect" style="margin-bottom:6px;">Menu</div>
+  <div class="nav-item active" data-page="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </div>
+  <div class="nav-item" data-page="scripts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    Scripts
+    <span class="nav-badge" id="badge-total">0</span>
+  </div>
+  <div class="nav-item" data-page="console">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+    Console
+  </div>
+  <div class="nav-item" data-page="logs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+    Logs
+  </div>
+  <div class="nav-item" data-page="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </div>
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-footer">ScriptManager v1.2.0</div>
+</div>
+
+<!-- Content -->
+<div id="content">
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-row">
+      <div class="sc"><div class="lbl">Total</div><div class="val" id="st-total">0</div></div>
+      <div class="sc"><div class="lbl">Running</div><div class="val green" id="st-running">0</div></div>
+      <div class="sc"><div class="lbl">Stopped</div><div class="val" id="st-stopped">0</div></div>
+      <div class="sc"><div class="lbl">Total Crashes</div><div class="val red" id="st-crashes">0</div></div>
+      <div class="sc"><div class="lbl">Scheduled</div><div class="val yellow" id="st-cron">0</div></div>
+    </div>
+    <div class="dash-wrap">
+      <div class="dash-box">
+        <table><thead><tr>
+          <th>Name</th><th>Type</th><th>Status</th><th>Uptime</th><th>CPU</th><th>RAM</th><th>Crashes</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="dash-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <div class="page" id="page-scripts">
+    <div class="phdr">
+      <h2>Scripts</h2>
+      <div class="phdr-r">
+        <div style="position:relative;">
+          <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--muted);pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="script-search" placeholder="Search… (Ctrl+F)" style="padding:6px 10px 6px 30px;background:var(--panel);border:1px solid var(--border2);color:var(--text);border-radius:6px;font-family:var(--font-ui);font-size:12px;outline:none;width:190px;transition:border-color .15s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'" oninput="filterScripts(this.value)"/>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-start-all">▶ Start All</button>
+        <button class="btn btn-ghost btn-sm" id="btn-stop-all">■ Stop All</button>
+        <button class="btn btn-primary" id="btn-add-script">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Register Script <span style="font-size:10px;opacity:.5;font-weight:400;">(Ctrl+N)</span>
+        </button>
+      </div>
+    </div>
+    <div class="stbl-wrap">
+      <table class="st">
+        <thead><tr>
+          <th>Name</th><th>Type</th><th>Runtime</th><th>Status</th><th>Uptime</th><th>CPU</th><th>RAM</th><th>Crashes</th><th>Schedule</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="scripts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Console -->
+  <div class="page" id="page-console">
+    <div class="con-header">
+      <h2>Console</h2>
+      <select id="con-select"><option value="">— Select Script —</option></select>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="btn-con-clear">Clear</button>
+        <button class="btn btn-ghost btn-sm" id="btn-con-scroll">⬇ Auto-scroll: ON</button>
+      </div>
+    </div>
+    <div class="con-body">
+      <div id="con-output"><div class="ll-empty">Select a running script to interact with it.</div></div>
+      <div class="con-input-row">
+        <input type="text" id="con-input" placeholder="Type input and press Enter to send to the process stdin…" disabled/>
+        <button class="btn btn-primary btn-sm" id="btn-con-send" disabled>Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs -->
+  <div class="page" id="page-logs">
+    <div class="logs-bar">
+      <h2>Logs</h2>
+      <select class="lsel" id="log-select"><option value="">— Select Script —</option></select>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="btn-log-export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export .txt
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-log-clear">Clear</button>
+        <button class="btn btn-ghost btn-sm" id="btn-log-scroll">⬇ Auto-scroll: ON</button>
+      </div>
+    </div>
+    <div id="log-out"><div class="ll-empty">Select a script above to view its output.</div></div>
+  </div>
+
+  <!-- Settings -->
+  <div class="page" id="page-settings">
+
+    <!-- Run on Windows Startup -->
+    <div class="scard" id="startup-card" style="position:relative;overflow:hidden;padding:22px 24px;">
+      <!-- Decorative background glow -->
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(74,240,160,.07) 0%,transparent 70%);pointer-events:none;"></div>
+
+      <!-- Header row: icon+title on left, toggle on right -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+          <div style="width:44px;height:44px;background:rgba(74,240,160,.1);border:1px solid rgba(74,240,160,.25);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🚀</div>
+          <div style="min-width:0;">
+            <div style="font-size:15px;font-weight:800;color:var(--text);letter-spacing:.01em;">Run on Windows Startup</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;">Launches silently into the system tray on boot</div>
+          </div>
+        </div>
+        <label class="tgl" id="startup-tgl" style="opacity:.4;pointer-events:none;flex-shrink:0;">
+          <input type="checkbox" id="startup-checkbox" disabled onchange="setStartup(this.checked)"/>
+          <span class="tgl-sl"></span>
+        </label>
+      </div>
+
+      <!-- Divider -->
+      <div style="margin:18px 0;border-top:1px solid var(--border);"></div>
+
+      <!-- Status indicator -->
+      <div id="startup-status-row" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">
+        <div id="startup-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s;"></div>
+        <span id="startup-status-text" style="font-size:12px;color:var(--muted);font-family:var(--font-mono);">Checking…</span>
+      </div>
+
+      <!-- Dev mode warning -->
+      <div id="startup-dev-warning" style="display:none;font-size:12px;color:var(--warn);margin-top:12px;padding:10px 14px;background:rgba(255,170,51,.07);border:1px solid rgba(255,170,51,.2);border-radius:7px;font-family:var(--font-mono);line-height:1.5;">
+        ⚠ Only available in the packaged .exe — run <span style="color:var(--accent);">npm run build</span> first.
+      </div>
+    </div>
+
+    <!-- Config / Storage card -->
+    <div class="scard">
+      <h3>📁 Config &amp; Storage</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">scripts.json location</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <code id="cfg-data-file" style="flex:1;font-family:var(--font-mono);font-size:12px;color:var(--accent);background:var(--bg);padding:6px 10px;border-radius:5px;border:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">loading…</code>
+            <button class="btn btn-ghost btn-sm" onclick="openInExplorer('data')">📂 Show</button>
+          </div>
+        </div>
+
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Auto-backups folder</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <code id="cfg-backup-dir" style="flex:1;font-family:var(--font-mono);font-size:12px;color:var(--muted);background:var(--bg);padding:6px 10px;border-radius:5px;border:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">loading…</code>
+            <button class="btn btn-ghost btn-sm" onclick="openInExplorer('backup')">📂 Show</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;">Up to 10 rolling backups are kept automatically. A new backup is created on every change (max once per minute).</div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="btn-export" onclick="exportConfig()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Config
+          </button>
+          <button class="btn btn-ghost" id="btn-import" onclick="importConfig()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import Config
+          </button>
+          <div id="cfg-status" style="font-size:12px;color:var(--accent);align-self:center;font-family:var(--font-mono);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scard">
+      <h3>About ScriptManager</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Local desktop manager for Node.js, Python, Batch and PowerShell scripts on Windows — no Docker, no containers. Minimises to system tray. Scripts are stored next to the .exe so they are easy to back up and move between machines.</p>
+    </div>
+
+    <div class="scard">
+      <h3>Build as .exe</h3>
+      <div class="build-steps">
+        <div class="build-step"><span class="step-num">1.</span> Install Node.js v18+ on your machine</div>
+        <div class="build-step"><span class="step-num">2.</span><span class="step-cmd"> npm install</span>  — installs all dependencies</div>
+        <div class="build-step"><span class="step-num">3.</span><span class="step-cmd"> npm run build</span>  — builds installer + portable into <span style="color:var(--accent);">dist/</span></div>
+        <div class="build-step"><span class="step-num">4.</span> Run <span style="color:var(--accent);">ScriptManager-Portable-1.4.0.exe</span> — scripts.json will be created next to it automatically</div>
+      </div>
+    </div>
+
+    <div class="scard">
+      <h3>⌨️ Keyboard Shortcuts</h3>
+      <table class="ref-tbl">
+        <tr><td>Ctrl + N</td><td>Register new script</td></tr>
+        <tr><td>Ctrl + F &nbsp;or&nbsp; /</td><td>Search scripts</td></tr>
+        <tr><td>Ctrl + L</td><td>Go to Logs</td></tr>
+        <tr><td>Ctrl + D</td><td>Go to Dashboard</td></tr>
+        <tr><td>Escape</td><td>Close modal / dialog</td></tr>
+      </table>
+    </div>
+
+    <div class="scard">
+      <h3>Cron Reference</h3>
+      <table class="ref-tbl">
+        <tr><td>*/5 * * * *</td><td>Every 5 minutes</td></tr>
+        <tr><td>0 * * * *</td><td>Every hour</td></tr>
+        <tr><td>0 0 * * *</td><td>Daily at midnight</td></tr>
+        <tr><td>0 9 * * 1-5</td><td>Weekdays at 9:00 AM</td></tr>
+        <tr><td>30 8 1 * *</td><td>1st of month at 8:30 AM</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+</div></div></div>
+
+<!-- ═══════ Register/Edit Modal ═══════ -->
+<div class="moverlay" id="modal-overlay">
+  <div class="modal">
+    <div class="mhdr">
+      <h3 id="modal-title">+ Register Script</h3>
+      <button class="btn btn-ghost btn-sm" id="modal-x">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="fr2">
+        <div class="fg"><label>Name</label><input type="text" id="f-name" placeholder="MyBot"/></div>
+        <div class="fg">
+          <label>Type</label>
+          <select id="f-type" onchange="onTypeChange()">
+            <optgroup label="Discord Bots">
+              <option value="discord-python">Discord Bot (Python)</option>
+              <option value="discord-node">Discord Bot (Node.js)</option>
+            </optgroup>
+            <optgroup label="Python">
+              <option value="python">Python Script</option>
+            </optgroup>
+            <optgroup label="Node.js">
+              <option value="node">Node.js App</option>
+              <option value="node-npm-start">Node.js App (npm start)</option>
+              <option value="node-npm-dev">Node.js App (npm run dev)</option>
+            </optgroup>
+            <optgroup label="Windows">
+              <option value="batch">Batch File (.bat)</option>
+              <option value="powershell">PowerShell Script (.ps1)</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="shell">Shell Script (.sh)</option>
+              <option value="bun">Bun App</option>
+              <option value="deno">Deno App</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <div class="fg" id="fg-path">
+        <label id="lbl-path">Script Path (Absolute)</label>
+        <div class="irow">
+          <input type="text" id="f-path" placeholder="C:\bots\mybot\main.py"/>
+          <button class="btn btn-ghost btn-sm" id="btn-browse-file">Browse File</button>
+        </div>
+        <div class="hint" id="hint-path"></div>
+      </div>
+
+      <div class="fg" id="fg-cwd">
+        <label id="lbl-cwd">Working Directory</label>
+        <div class="irow">
+          <input type="text" id="f-cwd" placeholder="(auto — uses script folder)"/>
+          <button class="btn btn-ghost btn-sm" id="btn-browse-folder">Browse Folder</button>
+        </div>
+        <div class="hint" id="hint-cwd" style="line-height:1.6;"></div>
+      </div>
+
+      <div class="fr2">
+        <div class="fg">
+          <label>Runtime / Launch Command</label>
+          <select id="f-runtime">
+            <option value="">— default —</option>
+            <optgroup label="Python">
+              <option>python</option><option>python3</option><option>python3.10</option>
+              <option>python3.11</option><option>python3.12</option><option>python3.13</option>
+              <option>py</option><option>py3</option>
+            </optgroup>
+            <optgroup label="Node.js">
+              <option>node</option><option>node18</option><option>node20</option>
+              <option>bun</option><option value="deno run">deno run</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option>bash</option><option>sh</option><option>powershell</option><option>cmd</option>
+            </optgroup>
+          </select>
+          <div class="hint">e.g. python3.12</div>
+        </div>
+        <div class="fg">
+          <label>Arguments <span style="font-weight:400;opacity:.6;">(optional)</span></label>
+          <input type="text" id="f-args" placeholder="--port 3000"/>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Notes <span style="font-weight:400;opacity:.6;">(optional)</span></label>
+        <textarea id="f-notes" placeholder="What does this script do? Any important info…" style="min-height:56px;resize:vertical;"></textarea>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Behaviour</div>
+
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">⚡ Auto-start on launch</div>
+          <div class="tgl-d">Start automatically when ScriptManager opens.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-autostart"/><span class="tgl-sl"></span></label>
+      </div>
+
+      <div class="fg">
+        <label>Auto-Restart</label>
+        <select id="f-autorestart" onchange="updateARHint()">
+          <option value="never">Never</option>
+          <option value="on-failure">On Failure (non-zero exit)</option>
+          <option value="always">Always (even on clean exit)</option>
+        </select>
+        <div class="hint" id="ar-hint">Script will not be restarted automatically.</div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Schedule (Cron)</div>
+
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">Enable Cron Schedule</div>
+          <div class="tgl-d">Run on a time-based schedule.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-cron-en" onchange="toggleCron()"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="cron-group" style="display:none;">
+        <div class="fg">
+          <label>Cron Expression</label>
+          <input type="text" id="f-cron" placeholder="0 * * * *"/>
+          <div class="hint">e.g. <span style="color:var(--accent);">*/5 * * * *</span> = every 5 min</div>
+        </div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Git Integration</div>
+
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">🔄 Enable Git Pull</div>
+          <div class="tgl-d">Show a "Git Pull &amp; Restart" button for this script.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-git-en" onchange="toggleGit()"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="git-group" style="display:none;">
+        <div class="fg">
+          <label>Git Repo Directory</label>
+          <div class="irow">
+            <input type="text" id="f-git-dir" placeholder="(auto — uses working directory)"/>
+            <button class="btn btn-ghost btn-sm" id="btn-browse-git">Browse</button>
+          </div>
+          <div class="hint">Folder containing the <span style="color:var(--accent);font-family:var(--font-mono);">.git</span> directory. Leave blank to use the working dir.</div>
+        </div>
+        <div class="fg">
+          <label>Git Branch <span style="font-weight:400;opacity:.6;">(optional)</span></label>
+          <input type="text" id="f-git-branch" placeholder="main"/>
+          <div class="hint">If set, runs <span style="color:var(--accent);font-family:var(--font-mono);">git pull origin &lt;branch&gt;</span> instead of just <span style="color:var(--accent);font-family:var(--font-mono);">git pull</span>.</div>
+        </div>
+        <div class="tgl-row" style="margin-top:4px;">
+          <div class="tgl-info">
+            <div class="tgl-t">Pull &amp; Restart on start</div>
+            <div class="tgl-d">Automatically git pull before starting the script each time.</div>
+          </div>
+          <label class="tgl"><input type="checkbox" id="f-git-on-start"/><span class="tgl-sl"></span></label>
+        </div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Environment Variables</div>
+      <div class="env-ed" id="env-ed"></div>
+      <button class="btn btn-ghost btn-sm" id="btn-add-env" style="align-self:flex-start;margin-top:4px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Variable
+      </button>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save Script</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let scripts = [];
+let logBuffers  = {};  // scriptId -> [{text,ts}]
+let statsCache  = {};  // scriptId -> {cpu,mem,uptime}
+let activeLog   = null;
+let activeCon   = null;
+let logScroll   = true;
+let conScroll   = true;
+let editingId   = null;
+let uptimeTick  = null;
+
+// ─── Type meta ────────────────────────────────────────────────────────────────
+const TYPES = {
+  'discord-python':{label:'Discord Bot',cat:'python',rt:'python'},
+  'discord-node':  {label:'Discord Bot',cat:'node',  rt:'node'},
+  'python':        {label:'Python',     cat:'python', rt:'python'},
+  'node':          {label:'Node.js',    cat:'node',   rt:'node'},
+  'node-npm-start':{label:'npm start',  cat:'node',   rt:''},
+  'node-npm-dev':  {label:'npm run dev',cat:'node',   rt:''},
+  'batch':         {label:'Batch',      cat:'batch',  rt:'cmd'},
+  'powershell':    {label:'PowerShell', cat:'shell',  rt:'powershell'},
+  'shell':         {label:'Shell',      cat:'shell',  rt:'bash'},
+  'bun':           {label:'Bun',        cat:'node',   rt:'bun'},
+  'deno':          {label:'Deno',       cat:'node',   rt:'deno run'},
+};
+const catBadge = c => ({python:'tb-python',node:'tb-node',shell:'tb-shell',batch:'tb-batch'}[c]||'tb-other');
+const typeLabel = t => TYPES[t]?.label || t;
+const typeBadge = t => catBadge(TYPES[t]?.cat);
+
+// Clean up intervals if page ever unloads
+window.addEventListener('beforeunload', () => {
+  if (uptimeTick) clearInterval(uptimeTick);
+  window.api.removeAllListeners('log');
+  window.api.removeAllListeners('status-update');
+  window.api.removeAllListeners('stats-update');
+});
+
+// ─── Nav ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-' + el.dataset.page).classList.add('active');
+    // Refresh settings page data every time it's opened
+    if (el.dataset.page === 'settings') {
+      loadConfigPaths();
+      loadStartupState();
+    }
+  });
+});
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+async function init() {
+  scripts = await window.api.getScripts();
+  renderAll();
+
+  window.api.onLog(({ scriptId, text, ts }) => {
+    if (!logBuffers[scriptId]) logBuffers[scriptId] = [];
+    logBuffers[scriptId].push({ text, ts });
+    if (logBuffers[scriptId].length > 3000) logBuffers[scriptId].shift();
+    if (activeLog === scriptId) appendToLog(text, ts);
+    if (activeCon === scriptId) appendToCon(text, ts);
+  });
+
+  window.api.onStatusUpdate(({ scriptId, status, pid, crashCount, startedAt, exitCode }) => {
+    const s = scripts.find(x => x.id === scriptId);
+    if (s) {
+      // Mark as 'crashed' if it stopped with a non-zero exit code
+      const crashed = status === 'stopped' && exitCode !== undefined && exitCode !== 0 && exitCode !== null;
+      s.status = crashed ? 'crashed' : status;
+      s.pid = pid || null;
+      if (crashCount !== undefined) s.crashCount = crashCount;
+      if (startedAt)  s.startedAt = startedAt;
+      if (exitCode !== undefined) s.lastExitCode = exitCode;
+      if (status === 'stopped' || crashed) { s.startedAt = null; delete statsCache[scriptId]; }
+    }
+    renderAll();
+    updateConInputState();
+  });
+
+  window.api.onStatsUpdate(({ scriptId, cpu, mem, uptime }) => {
+    statsCache[scriptId] = { cpu, mem, uptime };
+    // Update cells inline without full re-render
+    const cpuEl = document.querySelector(`[data-cpu="${scriptId}"]`);
+    const memEl = document.querySelector(`[data-mem="${scriptId}"]`);
+    const uptEl = document.querySelector(`[data-upt="${scriptId}"]`);
+    if (cpuEl) cpuEl.textContent = cpu + '%';
+    if (memEl) memEl.textContent = mem + ' MB';
+    if (uptEl) uptEl.textContent = fmtUptime(uptime);
+  });
+
+  // Uptime ticker for dashboard
+  uptimeTick = setInterval(() => {
+    document.querySelectorAll('[data-upt]').forEach(el => {
+      const sc = statsCache[el.dataset.upt];
+      if (sc) el.textContent = fmtUptime(sc.uptime + (Date.now() - (sc._ts || Date.now())));
+    });
+  }, 1000);
+}
+
+function renderAll() {
+  const total   = scripts.length;
+  const running = scripts.filter(s => s.status === 'running').length;
+  const crashes = scripts.reduce((a, s) => a + (s.crashCount || 0), 0);
+  document.getElementById('badge-total').textContent = total;
+  document.getElementById('st-total').textContent   = total;
+  document.getElementById('st-running').textContent = running;
+  document.getElementById('st-stopped').textContent = total - running;
+  document.getElementById('st-crashes').textContent = crashes;
+  document.getElementById('st-cron').textContent    = scripts.filter(s => s.cronEnabled).length;
+  renderDash(); renderTable(); refreshSelects();
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmtUptime(ms) {
+  if (!ms) return '—';
+  const s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60), d = Math.floor(h/24);
+  if (d > 0) return `${d}d ${h%24}h`;
+  if (h > 0) return `${h}h ${m%60}m`;
+  if (m > 0) return `${m}m ${s%60}s`;
+  return `${s}s`;
+}
+function crashBadge(n) {
+  if (!n) return `<span class="crash-badge none">0</span>`;
+  if (n < 5) return `<span class="crash-badge some">💥 ${n}</span>`;
+  return `<span class="crash-badge many">💥 ${n}</span>`;
+}
+function statChip(id, type) {
+  const sc = statsCache[id];
+  if (!sc) return `<span class="stat-chip na ${type}">—</span>`;
+  if (type === 'cpu') return `<span class="stat-chip cpu" data-cpu="${id}">${sc.cpu}%</span>`;
+  return `<span class="stat-chip mem" data-mem="${id}">${sc.mem} MB</span>`;
+}
+function uptimeCell(id) {
+  const sc = statsCache[id];
+  return `<span class="uptime-cell" data-upt="${id}">${sc ? fmtUptime(sc.uptime) : '—'}</span>`;
+}
+function rlabel(v) {
+  if (v==='on-failure') return '↺ Fail'; if (v==='always') return '↺ Always'; return '—';
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function renderDash() {
+  const tbody = document.getElementById('dash-tbody');
+  if (!scripts.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">No scripts yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = scripts.map(s => `
+    <tr>
+      <td style="font-weight:700;font-size:13px;">${esc(s.name)}</td>
+      <td><span class="tb ${typeBadge(s.type)}">${typeLabel(s.type)}</span></td>
+      <td><span class="sdot s-${s.status}">${s.status}</span></td>
+      <td>${uptimeCell(s.id)}</td>
+      <td>${statChip(s.id,'cpu')}</td>
+      <td>${statChip(s.id,'mem')}</td>
+      <td>${crashBadge(s.crashCount||0)}</td>
+      <td style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        ${s.status==='running'
+          ? `<button class="btn btn-danger btn-sm"  onclick="doStop('${s.id}')">■ Stop</button>
+             <button class="btn btn-ghost btn-sm"   onclick="doRestart('${s.id}')">↻ Restart</button>`
+          : s.status==='crashed'
+          ? `<button class="btn btn-primary btn-sm" onclick="doStart('${s.id}')">▶ Start</button>
+             <button class="btn btn-ghost btn-sm"   onclick="doRestart('${s.id}')">↻ Restart</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="doStart('${s.id}')">▶ Start</button>`}
+        ${s.gitEnabled ? `<button class="btn btn-git btn-sm" onclick="doGitPullRestart('${s.id}')" title="Git Pull & Restart">🔄 Pull</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+// ─── Scripts table ────────────────────────────────────────────────────────────
+// renderTable is defined below in the Search/Filter section (single unified version)
+
+// ─── Process actions ──────────────────────────────────────────────────────────
+const doStart   = id => window.api.startScript(id);
+const doStop    = id => window.api.stopScript(id);
+const doRestart = id => window.api.restartScript(id);
+const doGitPull = id => window.api.gitPull(id);
+const doGitPullRestart = id => window.api.gitPullRestart(id);
+
+async function doDelete(id) {
+  if (!confirm('Remove this script?')) return;
+  await window.api.removeScript(id);
+  scripts = scripts.filter(s => s.id !== id);
+  delete logBuffers[id];
+  delete statsCache[id];
+  // If this script was active in log/console, clear those views
+  if (activeLog === id) { activeLog = null; switchLog(null); }
+  if (activeCon === id) { activeCon = null; switchCon(null); }
+  renderAll();
+}
+document.getElementById('btn-start-all').addEventListener('click', () =>
+  scripts.filter(s=>s.status!=='running').forEach(s=>doStart(s.id)));
+document.getElementById('btn-stop-all').addEventListener('click', () =>
+  scripts.filter(s=>s.status==='running').forEach(s=>doStop(s.id)));
+
+// ─── Selects ─────────────────────────────────────────────────────────────────
+function refreshSelects() {
+  [['log-select', activeLog], ['con-select', activeCon]].forEach(([id, cur]) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = `<option value="">— Select Script —</option>` +
+      scripts.map(s=>`<option value="${s.id}">${esc(s.name)} ${s.status==='running'?'▶':s.status==='crashed'?'💥':''}</option>`).join('');
+    if (cur && scripts.find(x=>x.id===cur)) sel.value = cur;
+  });
+}
+
+// ─── Logs ─────────────────────────────────────────────────────────────────────
+function openLogs(id) {
+  gotoPage('logs');
+  document.getElementById('log-select').value = id;
+  switchLog(id);
+}
+document.getElementById('log-select').addEventListener('change', e => switchLog(e.target.value));
+function switchLog(id) {
+  activeLog = id || null;
+  const out = document.getElementById('log-out');
+  out.innerHTML = '';
+  if (!id) { out.innerHTML='<div class="ll-empty">Select a script to view its output.</div>'; return; }
+  const buf = logBuffers[id] || [];
+  if (!buf.length) { out.innerHTML='<div class="ll-empty">No output yet.</div>'; return; }
+  buf.forEach(({text,ts}) => appendToLog(text, ts));
+}
+function appendToLog(text, ts) {
+  if (!activeLog) return;
+  const out = document.getElementById('log-out');
+  out.querySelector('.ll-empty')?.remove();
+  _appendLine(out, text, ts, logScroll);
+}
+document.getElementById('btn-log-clear').addEventListener('click', () => {
+  if (activeLog) logBuffers[activeLog] = [];
+  document.getElementById('log-out').innerHTML='<div class="ll-empty">Cleared.</div>';
+});
+document.getElementById('btn-log-scroll').addEventListener('click', function() {
+  logScroll=!logScroll; this.textContent=(logScroll?'⬇':'—')+' Auto-scroll: '+(logScroll?'ON':'OFF');
+});
+
+// ─── Console ──────────────────────────────────────────────────────────────────
+function openConsole(id) {
+  gotoPage('console');
+  document.getElementById('con-select').value = id;
+  switchCon(id);
+}
+document.getElementById('con-select').addEventListener('change', e => switchCon(e.target.value));
+function switchCon(id) {
+  activeCon = id || null;
+  const out = document.getElementById('con-output');
+  out.innerHTML = '';
+  updateConInputState();
+  if (!id) { out.innerHTML='<div class="ll-empty">Select a running script to interact with it.</div>'; return; }
+  const buf = logBuffers[id] || [];
+  if (!buf.length) { out.innerHTML='<div class="ll-empty">No output yet. Start the script.</div>'; return; }
+  buf.slice(-200).forEach(({text,ts}) => appendToCon(text, ts));
+}
+function appendToCon(text, ts) {
+  if (!activeCon) return;
+  const out = document.getElementById('con-output');
+  out.querySelector('.ll-empty')?.remove();
+  _appendLine(out, text, ts, conScroll);
+}
+function updateConInputState() {
+  const s = scripts.find(x => x.id === activeCon);
+  const running = s?.status === 'running';
+  document.getElementById('con-input').disabled = !running;
+  document.getElementById('btn-con-send').disabled = !running;
+  document.getElementById('con-input').placeholder = running
+    ? 'Type input and press Enter to send to the process stdin…'
+    : 'Script is not running. Start it first.';
+}
+async function sendConsoleInput() {
+  const input = document.getElementById('con-input');
+  const text = input.value.trim();
+  if (!text || !activeCon) return;
+  const result = await window.api.sendStdin(activeCon, text);
+  const out = document.getElementById('con-output');
+  if (result && !result.ok) {
+    // stdin not writable — show warning inline
+    const warn = document.createElement('span');
+    warn.className = 'll ll-err';
+    warn.innerHTML = `<span class="ll-ts">[stdin]</span>⚠ ${esc(result.error||'Could not send input')}`;
+    out.appendChild(warn);
+  } else {
+    // Show sent input in green
+    const span = document.createElement('span');
+    span.className = 'll ll-in';
+    span.innerHTML = `<span class="ll-ts">[stdin]</span>&gt; ${esc(text)}`;
+    out.appendChild(span);
+  }
+  if (conScroll) out.scrollTop = out.scrollHeight;
+  input.value = '';
+}
+document.getElementById('btn-con-send').addEventListener('click', sendConsoleInput);
+document.getElementById('con-input').addEventListener('keydown', e => { if (e.key==='Enter') sendConsoleInput(); });
+document.getElementById('btn-con-clear').addEventListener('click', () => {
+  document.getElementById('con-output').innerHTML = '<div class="ll-empty">Cleared.</div>';
+});
+document.getElementById('btn-con-scroll').addEventListener('click', function() {
+  conScroll=!conScroll; this.textContent=(conScroll?'⬇':'—')+' Auto-scroll: '+(conScroll?'ON':'OFF');
+});
+
+// ─── Shared log helper ────────────────────────────────────────────────────────
+function _appendLine(container, text, ts, scroll) {
+  const isErr = text.includes('[ERR]');
+  const isSys = /^[▶■↻⏰✓🔄]/.test(text.trim());
+  const time  = new Date(ts).toTimeString().slice(0,8);
+  const span  = document.createElement('span');
+  span.className = 'll'+(isErr?' ll-err':isSys?' ll-sys':'');
+  span.innerHTML = `<span class="ll-ts">[${time}]</span>${esc(text)}`;
+  container.appendChild(span);
+  if (scroll) container.scrollTop = container.scrollHeight;
+}
+
+// ─── Nav helper ───────────────────────────────────────────────────────────────
+function gotoPage(name) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`[data-page=${name}]`).classList.add('active');
+  document.getElementById(`page-${name}`).classList.add('active');
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function openModal(id=null) {
+  editingId = id;
+  const s = id ? scripts.find(x=>x.id===id) : null;
+  document.getElementById('modal-title').textContent = id ? 'Edit Script' : '+ Register Script';
+  document.getElementById('f-name').value        = s?.name||'';
+  document.getElementById('f-type').value        = s?.type||'discord-python';
+  document.getElementById('f-path').value        = s?.path||'';
+  document.getElementById('f-cwd').value         = s?.cwd||'';
+  document.getElementById('f-runtime').value     = s?.runtime||'';
+  document.getElementById('f-args').value        = s?.args||'';
+  document.getElementById('f-autostart').checked = s?.autoStart||false;
+  document.getElementById('f-autorestart').value = s?.autoRestart||'never';
+  document.getElementById('f-cron-en').checked   = s?.cronEnabled||false;
+  document.getElementById('f-cron').value        = s?.cronSchedule||'';
+  document.getElementById('f-notes').value          = s?.notes || '';
+  document.getElementById('f-git-en').checked      = s?.gitEnabled || false;
+  document.getElementById('f-git-dir').value        = s?.gitDir || '';
+  document.getElementById('f-git-branch').value     = s?.gitBranch || '';
+  document.getElementById('f-git-on-start').checked = s?.gitOnStart || false;
+  toggleGit();
+  onTypeChange(); // update form fields (hides path vs shows folder picker)
+  updateARHint(); toggleCron(); renderEnvEd(s?.env||[]);
+  if (s?.cwd) document.getElementById('f-cwd').value = s.cwd; // restore after onTypeChange
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(), 50);
+}
+const closeModal = () => { document.getElementById('modal-overlay').classList.remove('open'); editingId=null; };
+
+function toggleCron() {
+  document.getElementById('cron-group').style.display = document.getElementById('f-cron-en').checked?'':'none';
+}
+function toggleGit() {
+  document.getElementById('git-group').style.display = document.getElementById('f-git-en').checked?'':'none';
+}
+const NPM_TYPES = ['node-npm-start', 'node-npm-dev'];
+function onTypeChange() {
+  const type = document.getElementById('f-type').value;
+  const meta = TYPES[type];
+  if (meta?.rt !== undefined) document.getElementById('f-runtime').value = meta.rt;
+
+  const isNpm = NPM_TYPES.includes(type);
+
+  // Path field: hidden for npm types (not needed), shown for others
+  const fgPath  = document.getElementById('fg-path');
+  const fPath   = document.getElementById('f-path');
+  const lblCwd  = document.getElementById('lbl-cwd');
+  const hintCwd = document.getElementById('hint-cwd');
+  const fCwd    = document.getElementById('f-cwd');
+  if (!fgPath || !fPath || !lblCwd || !hintCwd || !fCwd) return; // modal not yet in DOM
+
+  if (isNpm) {
+    // npm types only need the project folder — no file path required
+    fgPath.style.display = 'none';
+    lblCwd.innerHTML = 'Project Folder <span style="color:var(--danger);font-size:11px;font-weight:700;">* Required</span>';
+    hintCwd.innerHTML = `
+      <span style="color:var(--warn);">📁 Browse to the folder that contains your <span style="font-family:var(--font-mono);color:var(--accent);">package.json</span></span><br>
+      e.g. <span style="font-family:var(--font-mono);color:var(--accent);">C:\\bots\\myproject</span> (where package.json lives)<br>
+      <span style="color:var(--muted);">This becomes the working directory for npm.</span>`;
+    fCwd.placeholder = 'C:\bots\myproject  (folder with package.json)';
+  } else {
+    fgPath.style.display = '';
+    lblCwd.innerHTML = 'Working Directory <span style="color:var(--muted);font-size:10px;font-weight:400;">(optional)</span>';
+    hintCwd.innerHTML = 'Leave blank to auto-use the script file\'s folder.';
+    fCwd.placeholder = '(auto)';
+    fPath.placeholder = type.includes('python') || type.includes('discord-python')
+      ? 'C:\bots\mybot\main.py'
+      : 'C:\bots\mybot\index.js';
+  }
+
+  // Hide runtime dropdown for npm types (npm handles it internally)
+  document.getElementById('f-runtime').closest('.fg').style.display = isNpm ? 'none' : '';
+}
+function updateARHint() {
+  const hints = {never:'Not restarted automatically.',
+    'on-failure':'Restarts on crash (non-zero exit).',
+    always:'Restarts on any exit, including clean shutdowns.'};
+  document.getElementById('ar-hint').textContent = hints[document.getElementById('f-autorestart').value]||'';
+}
+
+document.getElementById('btn-add-script').addEventListener('click', ()=>openModal());
+document.getElementById('modal-x').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('btn-browse-file').addEventListener('click', async()=>{
+  const p = await window.api.browseFile();
+  if (p) document.getElementById('f-path').value = p;
+});
+document.getElementById('btn-browse-folder').addEventListener('click', async()=>{
+  const p = await window.api.browseFolder();
+  if (p) document.getElementById('f-cwd').value = p;
+});
+document.getElementById('btn-browse-git').addEventListener('click', async()=>{
+  const p = await window.api.browseFolder();
+  if (p) document.getElementById('f-git-dir').value = p;
+});
+
+document.getElementById('modal-save').addEventListener('click', async()=>{
+  const name = document.getElementById('f-name').value.trim();
+  const type = document.getElementById('f-type').value;
+  const isNpmType = NPM_TYPES.includes(type);
+  const filePath = document.getElementById('f-path').value.trim();
+  const cwd = document.getElementById('f-cwd').value.trim();
+
+  if (!name) { alert('Name is required.'); return; }
+  // For npm types, the project folder (cwd) is required instead of a file path
+  if (isNpmType && !cwd) { alert('Project Folder is required for npm types.\nSet the folder that contains your package.json.'); return; }
+  if (!isNpmType && !filePath) { alert('Script Path is required.'); return; }
+
+  const data={
+    name,
+    // For npm types: path = cwd (the folder), so main.js can use it as cwd
+    path: isNpmType ? cwd : filePath,
+    type,
+    cwd,
+    runtime:     document.getElementById('f-runtime').value,
+    args:        document.getElementById('f-args').value.trim(),
+    autoStart:   document.getElementById('f-autostart').checked,
+    autoRestart: document.getElementById('f-autorestart').value,
+    cronEnabled: document.getElementById('f-cron-en').checked,
+    cronSchedule:document.getElementById('f-cron').value.trim(),
+    notes:         document.getElementById('f-notes').value.trim(),
+    env:           collectEnv(),
+    gitEnabled:    document.getElementById('f-git-en').checked,
+    gitDir:        document.getElementById('f-git-dir').value.trim(),
+    gitBranch:     document.getElementById('f-git-branch').value.trim(),
+    gitOnStart:    document.getElementById('f-git-on-start').checked,
+  };
+  if(editingId){
+    data.id=editingId;
+    const res=await window.api.updateScript(data);
+    if(res.ok){const i=scripts.findIndex(s=>s.id===editingId);if(i!==-1)scripts[i]={...scripts[i],...data};}
+  } else {
+    const s=await window.api.addScript(data); scripts.push(s);
+  }
+  renderAll(); closeModal();
+});
+const openEdit = id => openModal(id);
+
+// ─── Env editor ───────────────────────────────────────────────────────────────
+function renderEnvEd(arr) { document.getElementById('env-ed').innerHTML=''; (arr||[]).forEach(({k,v})=>addEnvRow(k,v)); }
+function addEnvRow(k='',v='') {
+  const ed=document.getElementById('env-ed');
+  const row=document.createElement('div'); row.className='env-row';
+  row.innerHTML=`<input type="text" class="ek" placeholder="VARIABLE_NAME" value="${esc(k)}"/>
+    <span class="env-eq">=</span>
+    <input type="text" class="ev" placeholder="value" value="${esc(v)}"/>
+    <button class="xbtn" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+  ed.appendChild(row);
+}
+document.getElementById('btn-add-env').addEventListener('click', ()=>addEnvRow());
+const collectEnv = ()=>[...document.querySelectorAll('#env-ed .env-row')]
+  .map(r=>({k:r.querySelector('.ek').value.trim(),v:r.querySelector('.ev').value})).filter(e=>e.k);
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+const iPlay    = ()=>`<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+const iStop    = ()=>`<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`;
+const iRestart = ()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.21"/></svg>`;
+const iEdit    = ()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const iLog     = ()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>`;
+const iTrash   = ()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+const iGit     = ()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.21"/></svg>`;
+const iCon     = ()=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>`;
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── Search / Filter ──────────────────────────────────────────────────────────
+let searchQuery = '';
+function filterScripts(q) {
+  searchQuery = (q || '').toLowerCase().trim();
+  renderTable();
+}
+
+// Single unified renderTable — handles both search filtering and normal rendering
+function renderTable() {
+  const tbody = document.getElementById('scripts-tbody');
+  const filtered = searchQuery
+    ? scripts.filter(s =>
+        s.name.toLowerCase().includes(searchQuery) ||
+        (s.type||'').toLowerCase().includes(searchQuery) ||
+        (s.path||'').toLowerCase().includes(searchQuery) ||
+        (s.notes||'').toLowerCase().includes(searchQuery) ||
+        s.status.toLowerCase().includes(searchQuery)
+      )
+    : scripts;
+
+  if (!filtered.length) {
+    tbody.innerHTML = searchQuery
+      ? `<tr class="no-row"><td colspan="10">No scripts match "<strong>${esc(searchQuery)}</strong>" — <a href="#" onclick="document.getElementById('script-search').value='';filterScripts('');return false;" style="color:var(--accent);">clear search</a></td></tr>`
+      : `<tr class="no-row"><td colspan="10">No scripts yet — click <strong>Register Script</strong> or press <kbd style="background:var(--border2);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px;">Ctrl+N</kbd>.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(s => `
+    <tr>
+      <td class="name-cell">
+        ${esc(s.name)}
+        ${s.notes ? `<span title="${esc(s.notes)}" style="margin-left:6px;cursor:help;font-size:11px;opacity:.5;">📝</span>` : ''}
+      </td>
+      <td><span class="tb ${typeBadge(s.type)}">${typeLabel(s.type)}</span></td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">${esc(s.runtime||'default')}</td>
+      <td>
+        <span class="sdot s-${s.status}">${s.status}</span>
+        ${s.status==='crashed' ? `<span style="font-size:10px;color:var(--danger);font-family:var(--font-mono);margin-left:4px;">exit ${s.lastExitCode??'?'}</span>` : ''}
+      </td>
+      <td>${uptimeCell(s.id)}</td>
+      <td>${statChip(s.id,'cpu')}</td>
+      <td>${statChip(s.id,'mem')}</td>
+      <td>${crashBadge(s.crashCount||0)}</td>
+      <td>${s.cronEnabled?`<span class="cron-tag">${esc(s.cronSchedule||'—')}</span>`:'<span style="color:var(--muted2);font-size:12px;">—</span>'}</td>
+      <td>
+        <div class="act-cell">
+          ${s.status==='running'
+            ?`<button class="ibtn stop"  title="Stop"  onclick="doStop('${s.id}')">${iStop()}</button>`
+            :`<button class="ibtn start" title="Start" onclick="doStart('${s.id}')">${iPlay()}</button>`}
+          <button class="ibtn" title="Restart" onclick="doRestart('${s.id}')">${iRestart()}</button>
+          ${s.gitEnabled ? `<button class="ibtn git" title="Git Pull & Restart" onclick="doGitPullRestart('${s.id}')">${iGit()}</button>` : ''}
+          <button class="ibtn con" title="Open Console" onclick="openConsole('${s.id}')">${iCon()}</button>
+          <button class="ibtn"     title="Logs"         onclick="openLogs('${s.id}')">${iLog()}</button>
+          <button class="ibtn"     title="Edit"         onclick="openEdit('${s.id}')">${iEdit()}</button>
+          <button class="ibtn del" title="Remove"       onclick="doDelete('${s.id}')">${iTrash()}</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ─── Log Export ───────────────────────────────────────────────────────────────
+document.getElementById('btn-log-export').addEventListener('click', async () => {
+  if (!activeLog) { return; }
+  const buf = logBuffers[activeLog] || [];
+  if (!buf.length) { alert('No log output to export yet.'); return; }
+  const scriptName = scripts.find(s => s.id === activeLog)?.name || 'log';
+  // Build plain text — strip HTML, format as [HH:MM:SS] line
+  const lines = buf.map(({ text, ts }) => {
+    const time = new Date(ts).toTimeString().slice(0,8);
+    const clean = text.replace(/\n$/, '');
+    return '[' + time + '] ' + clean;
+  });
+  const text = lines.join('\n');
+  const r = await window.api.exportLog(scriptName, text);
+  if (r.ok) {
+    const btn = document.getElementById('btn-log-export');
+    const orig = btn.innerHTML;
+    btn.textContent = '✓ Saved!';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2500);
+  } else if (r.error) {
+    alert('Export failed: ' + r.error);
+  }
+});
+
+// ─── Keyboard Shortcuts ───────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName?.toLowerCase();
+  const inInput = ['input','textarea','select'].includes(tag);
+
+  // Ctrl+N — New script (Register)
+  if (e.ctrlKey && e.key === 'n') {
+    e.preventDefault();
+    openModal();
+    return;
+  }
+  // Ctrl+F — Focus search on Scripts page
+  if (e.ctrlKey && e.key === 'f') {
+    e.preventDefault();
+    gotoPage('scripts');
+    const s = document.getElementById('script-search');
+    if (s) { s.focus(); s.select(); }
+    return;
+  }
+  // Ctrl+L — Go to Logs
+  if (e.ctrlKey && e.key === 'l') {
+    e.preventDefault();
+    gotoPage('logs');
+    return;
+  }
+  // Ctrl+D — Go to Dashboard
+  if (e.ctrlKey && e.key === 'd') {
+    e.preventDefault();
+    gotoPage('dashboard');
+    return;
+  }
+  // Escape — close modal if open
+  if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('open')) {
+    closeModal();
+    return;
+  }
+  // / — focus search from anywhere (when not in input)
+  if (e.key === '/' && !inInput) {
+    e.preventDefault();
+    gotoPage('scripts');
+    const s = document.getElementById('script-search');
+    if (s) { s.focus(); s.select(); }
+    return;
+  }
+});
+
+// ─── Windows Startup ──────────────────────────────────────────────────────────
+async function loadStartupState() {
+  const r = await window.api.getStartupEnabled();
+  const tgl     = document.getElementById('startup-tgl');
+  const cb      = document.getElementById('startup-checkbox');
+  const dot     = document.getElementById('startup-status-dot');
+  const txt     = document.getElementById('startup-status-text');
+  const devWarn = document.getElementById('startup-dev-warning');
+
+  if (r.devMode) {
+    // Running in dev — disable the toggle and show warning
+    devWarn.style.display = 'block';
+    tgl.style.opacity = '.35';
+    tgl.style.pointerEvents = 'none';
+    cb.disabled = true;
+    dot.style.background = 'var(--muted)';
+    txt.textContent = 'Not available in dev mode';
+    txt.style.color = 'var(--muted)';
+    return;
+  }
+
+  // Packaged .exe — enable the toggle
+  tgl.style.opacity = '1';
+  tgl.style.pointerEvents = 'auto';
+  cb.disabled = false;
+  cb.checked = r.enabled;
+  updateStartupUI(r.enabled);
+}
+
+function updateStartupUI(enabled) {
+  const dot = document.getElementById('startup-status-dot');
+  const txt = document.getElementById('startup-status-text');
+  if (enabled) {
+    dot.style.background = 'var(--accent)';
+    dot.style.boxShadow  = '0 0 5px var(--accent)';
+    txt.textContent = 'Enabled — ScriptManager will launch automatically with Windows';
+    txt.style.color = 'var(--accent)';
+  } else {
+    dot.style.background = 'var(--muted)';
+    dot.style.boxShadow  = 'none';
+    txt.textContent = 'Disabled — ScriptManager will not launch on startup';
+    txt.style.color = 'var(--muted)';
+  }
+}
+
+async function setStartup(enable) {
+  const cb = document.getElementById('startup-checkbox');
+  if (cb.disabled) { cb.checked = !enable; return; }
+  const txt = document.getElementById('startup-status-text');
+  txt.textContent = enable ? 'Enabling…' : 'Disabling…';
+  txt.style.color = 'var(--muted)';
+
+  const r = await window.api.setStartupEnabled(enable);
+  if (r.ok) {
+    updateStartupUI(r.enabled);
+    // Also update the checkbox to the verified state
+    document.getElementById('startup-checkbox').checked = r.enabled;
+  } else {
+    txt.textContent = '✕ Failed: ' + (r.error || 'Unknown error');
+    txt.style.color = 'var(--danger)';
+    // Revert checkbox
+    document.getElementById('startup-checkbox').checked = !enable;
+  }
+}
+
+// ─── Config / Storage ─────────────────────────────────────────────────────────
+let configPaths = {};
+async function loadConfigPaths() {
+  configPaths = await window.api.getConfigPaths();
+  const df = document.getElementById('cfg-data-file');
+  const bd = document.getElementById('cfg-backup-dir');
+  if (df) df.textContent = configPaths.dataFile  || '—';
+  if (bd) bd.textContent = configPaths.backupDir || '—';
+}
+
+async function openInExplorer(which) {
+  const p = which === 'data' ? configPaths.dataFile : configPaths.backupDir;
+  if (p) await window.api.openInExplorer(p);
+}
+
+async function exportConfig() {
+  const btn = document.getElementById('btn-export');
+  btn.disabled = true;
+  const r = await window.api.exportConfig();
+  btn.disabled = false;
+  if (r.ok) {
+    showCfgStatus(`✓ Exported to ${r.path}`);
+  } else if (r.error) {
+    showCfgStatus(`✕ Export failed: ${r.error}`, true);
+  }
+}
+
+async function importConfig() {
+  const btn = document.getElementById('btn-import');
+  btn.disabled = true;
+  const r = await window.api.importConfig();
+  btn.disabled = false;
+  if (r.ok) {
+    scripts = await window.api.getScripts();
+    // Clear stale log buffers and stats for any scripts that were replaced
+    logBuffers = {};
+    statsCache = {};
+    activeLog = null;
+    activeCon = null;
+    renderAll();
+    showCfgStatus(`✓ Imported ${r.count} scripts successfully`);
+  } else if (r.error) {
+    showCfgStatus(`✕ Import failed: ${r.error}`, true);
+  }
+}
+
+function showCfgStatus(msg, isError = false) {
+  const el = document.getElementById('cfg-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--danger)' : 'var(--accent)';
+  setTimeout(() => { el.textContent = ''; }, 5000);
+}
+
+init();
+loadConfigPaths();
+loadStartupState();
+</script>
+</body>
+</html>
