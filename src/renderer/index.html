@@ -359,41 +359,6 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
   <!-- Settings -->
   <div class="page" id="page-settings">
 
-    <!-- Run on Windows Startup -->
-    <div class="scard" id="startup-card" style="position:relative;overflow:hidden;padding:22px 24px;">
-      <!-- Decorative background glow -->
-      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(74,240,160,.07) 0%,transparent 70%);pointer-events:none;"></div>
-
-      <!-- Header row: icon+title on left, toggle on right -->
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
-        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
-          <div style="width:44px;height:44px;background:rgba(74,240,160,.1);border:1px solid rgba(74,240,160,.25);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🚀</div>
-          <div style="min-width:0;">
-            <div style="font-size:15px;font-weight:800;color:var(--text);letter-spacing:.01em;">Run on Windows Startup</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:3px;">Launches silently into the system tray on boot</div>
-          </div>
-        </div>
-        <label class="tgl" id="startup-tgl" style="opacity:.4;pointer-events:none;flex-shrink:0;">
-          <input type="checkbox" id="startup-checkbox" disabled onchange="setStartup(this.checked)"/>
-          <span class="tgl-sl"></span>
-        </label>
-      </div>
-
-      <!-- Divider -->
-      <div style="margin:18px 0;border-top:1px solid var(--border);"></div>
-
-      <!-- Status indicator -->
-      <div id="startup-status-row" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">
-        <div id="startup-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s;"></div>
-        <span id="startup-status-text" style="font-size:12px;color:var(--muted);font-family:var(--font-mono);">Checking…</span>
-      </div>
-
-      <!-- Dev mode warning -->
-      <div id="startup-dev-warning" style="display:none;font-size:12px;color:var(--warn);margin-top:12px;padding:10px 14px;background:rgba(255,170,51,.07);border:1px solid rgba(255,170,51,.2);border-radius:7px;font-family:var(--font-mono);line-height:1.5;">
-        ⚠ Only available in the packaged .exe — run <span style="color:var(--accent);">npm run build</span> first.
-      </div>
-    </div>
-
     <!-- Config / Storage card -->
     <div class="scard">
       <h3>📁 Config &amp; Storage</h3>
@@ -414,6 +379,19 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
             <button class="btn btn-ghost btn-sm" onclick="openInExplorer('backup')">📂 Show</button>
           </div>
           <div style="font-size:11px;color:var(--muted);margin-top:6px;">Up to 10 rolling backups are kept automatically. A new backup is created on every change (max once per minute).</div>
+        </div>
+
+        <!-- Windows Startup toggle row -->
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">🚀 Run on Windows Startup</div>
+            <div id="startup-status-text" style="font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono);">Checking…</div>
+            <div id="startup-dev-warning" style="display:none;font-size:11px;color:var(--warn);margin-top:3px;font-family:var(--font-mono);">⚠ Only available in the packaged .exe</div>
+          </div>
+          <label class="tgl" id="startup-tgl" style="opacity:.4;pointer-events:none;flex-shrink:0;">
+            <input type="checkbox" id="startup-checkbox" disabled onchange="setStartup(this.checked)"/>
+            <span class="tgl-sl"></span>
+          </label>
         </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -1270,26 +1248,21 @@ document.addEventListener('keydown', e => {
 
 // ─── Windows Startup ──────────────────────────────────────────────────────────
 async function loadStartupState() {
-  const r = await window.api.getStartupEnabled();
+  const r       = await window.api.getStartupEnabled();
   const tgl     = document.getElementById('startup-tgl');
   const cb      = document.getElementById('startup-checkbox');
-  const dot     = document.getElementById('startup-status-dot');
   const txt     = document.getElementById('startup-status-text');
   const devWarn = document.getElementById('startup-dev-warning');
 
   if (r.devMode) {
-    // Running in dev — disable the toggle and show warning
     devWarn.style.display = 'block';
     tgl.style.opacity = '.35';
     tgl.style.pointerEvents = 'none';
     cb.disabled = true;
-    dot.style.background = 'var(--muted)';
-    txt.textContent = 'Not available in dev mode';
-    txt.style.color = 'var(--muted)';
+    txt.style.display = 'none';
     return;
   }
 
-  // Packaged .exe — enable the toggle
   tgl.style.opacity = '1';
   tgl.style.pointerEvents = 'auto';
   cb.disabled = false;
@@ -1298,17 +1271,12 @@ async function loadStartupState() {
 }
 
 function updateStartupUI(enabled) {
-  const dot = document.getElementById('startup-status-dot');
   const txt = document.getElementById('startup-status-text');
   if (enabled) {
-    dot.style.background = 'var(--accent)';
-    dot.style.boxShadow  = '0 0 5px var(--accent)';
-    txt.textContent = 'Enabled — ScriptManager will launch automatically with Windows';
+    txt.textContent = 'Enabled — launches with Windows';
     txt.style.color = 'var(--accent)';
   } else {
-    dot.style.background = 'var(--muted)';
-    dot.style.boxShadow  = 'none';
-    txt.textContent = 'Disabled — ScriptManager will not launch on startup';
+    txt.textContent = 'Disabled';
     txt.style.color = 'var(--muted)';
   }
 }
@@ -1323,13 +1291,11 @@ async function setStartup(enable) {
   const r = await window.api.setStartupEnabled(enable);
   if (r.ok) {
     updateStartupUI(r.enabled);
-    // Also update the checkbox to the verified state
-    document.getElementById('startup-checkbox').checked = r.enabled;
+    cb.checked = r.enabled;
   } else {
     txt.textContent = '✕ Failed: ' + (r.error || 'Unknown error');
     txt.style.color = 'var(--danger)';
-    // Revert checkbox
-    document.getElementById('startup-checkbox').checked = !enable;
+    cb.checked = !enable;
   }
 }
 

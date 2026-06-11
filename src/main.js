@@ -663,28 +663,47 @@ ipcMain.handle('open-in-explorer', (_, filePath) => {
 });
 
 // ── Windows startup (run on boot) ────────────────────────────────────────────
-// Uses Electron's built-in loginItem API which writes to the Windows registry
-// HKCU\Software\Microsoft\Windows\CurrentVersion\Run — no admin required.
+// Electron's getLoginItemSettings is unreliable on Windows — it ignores the
+// StartupApproved\Run key that Task Manager uses to block startup items.
+// We bypass it entirely and use reg.exe to read/write the registry directly.
+const STARTUP_REG_KEY  = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+const STARTUP_REG_NAME = 'ScriptManager';
+
+function getStartupEnabledFromRegistry() {
+  try {
+    const out = execSync(
+      `reg query "${STARTUP_REG_KEY}" /v "${STARTUP_REG_NAME}"`,
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+    );
+    return out.includes(STARTUP_REG_NAME);
+  } catch (_) {
+    return false; // key absent → not enabled
+  }
+}
+
 ipcMain.handle('get-startup-enabled', () => {
-  // Only works in packaged .exe — always returns false in dev
   if (!app.isPackaged) return { enabled: false, devMode: true };
-  const settings = app.getLoginItemSettings();
-  return { enabled: settings.openAtLogin, devMode: false };
+  return { enabled: getStartupEnabledFromRegistry(), devMode: false };
 });
 
 ipcMain.handle('set-startup-enabled', (_, enable) => {
   if (!app.isPackaged) return { ok: false, error: 'Only works in packaged .exe — not in dev mode.' };
   try {
-    app.setLoginItemSettings({
-      openAtLogin: enable,
-      // Start minimized to tray so it doesn't flash a window on every boot
-      openAsHidden: true,
-      // Name shown in Task Manager / Startup apps list
-      name: 'ScriptManager',
-    });
-    // Verify it actually took effect
-    const check = app.getLoginItemSettings();
-    return { ok: true, enabled: check.openAtLogin };
+    const exePath = app.getPath('exe');
+    if (enable) {
+      execSync(
+        `reg add "${STARTUP_REG_KEY}" /v "${STARTUP_REG_NAME}" /t REG_SZ /d "${exePath}" /f`,
+        { encoding: 'utf8', stdio: 'ignore' }
+      );
+    } else {
+      try {
+        execSync(
+          `reg delete "${STARTUP_REG_KEY}" /v "${STARTUP_REG_NAME}" /f`,
+          { encoding: 'utf8', stdio: 'ignore' }
+        );
+      } catch (_) { /* already absent — that's fine */ }
+    }
+    return { ok: true, enabled: getStartupEnabledFromRegistry() };
   } catch (e) {
     return { ok: false, error: e.message };
   }
