@@ -499,6 +499,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
             <optgroup label="Windows">
               <option value="batch">Batch File (.bat)</option>
               <option value="powershell">PowerShell Script (.ps1)</option>
+              <option value="exe">Executable (.exe)</option>
             </optgroup>
             <optgroup label="Other">
               <option value="shell">Shell Script (.sh)</option>
@@ -670,6 +671,7 @@ const TYPES = {
   'shell':         {label:'Shell',      cat:'shell',  rt:'bash'},
   'bun':           {label:'Bun',        cat:'node',   rt:'bun'},
   'deno':          {label:'Deno',       cat:'node',   rt:'deno run'},
+  'exe':           {label:'Executable', cat:'batch',  rt:''},
 };
 const catBadge = c => ({python:'tb-python',node:'tb-node',shell:'tb-shell',batch:'tb-batch'}[c]||'tb-other');
 const typeLabel = t => TYPES[t]?.label || t;
@@ -1031,13 +1033,16 @@ function onTypeChange() {
     lblCwd.innerHTML = 'Working Directory <span style="color:var(--muted);font-size:10px;font-weight:400;">(optional)</span>';
     hintCwd.innerHTML = 'Leave blank to auto-use the script file\'s folder.';
     fCwd.placeholder = '(auto)';
-    fPath.placeholder = type.includes('python') || type.includes('discord-python')
+    fPath.placeholder = type === 'exe'
+      ? 'C:\\Program Files\\MyApp\\myapp.exe'
+      : type.includes('python') || type.includes('discord-python')
       ? 'C:\bots\mybot\main.py'
       : 'C:\bots\mybot\index.js';
   }
 
-  // Hide runtime dropdown for npm types (npm handles it internally)
-  document.getElementById('f-runtime').closest('.fg').style.display = isNpm ? 'none' : '';
+  // Hide runtime dropdown for npm and exe types (neither needs an interpreter)
+  const isExe = type === 'exe';
+  document.getElementById('f-runtime').closest('.fg').style.display = (isNpm || isExe) ? 'none' : '';
 }
 function updateARHint() {
   const hints = {never:'Not restarted automatically.',

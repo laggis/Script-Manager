@@ -298,15 +298,21 @@ function startScript(scriptId) {
   } else if (script.type === 'node-npm-dev') {
     cmd = 'npm'; args = ['run', 'dev'];
   } else {
-    cmd = script.runtime || (
-      ['python','discord-python'].includes(script.type) ? 'python' :
-      script.type === 'batch'      ? 'cmd' :
-      script.type === 'powershell' ? 'powershell' :
-      script.type === 'bun'        ? 'bun' :
-      script.type === 'deno'       ? 'deno' : 'node'
-    );
-    const extraArgs = script.args ? script.args.trim().split(/\s+/) : [];
-    args = script.path ? [script.path, ...extraArgs] : extraArgs;
+    if (script.type === 'exe') {
+      // Run the .exe directly — no interpreter wrapper needed
+      cmd = script.path;
+      args = script.args ? script.args.trim().split(/\s+/) : [];
+    } else {
+      cmd = script.runtime || (
+        ['python','discord-python'].includes(script.type) ? 'python' :
+        script.type === 'batch'      ? 'cmd' :
+        script.type === 'powershell' ? 'powershell' :
+        script.type === 'bun'        ? 'bun' :
+        script.type === 'deno'       ? 'deno' : 'node'
+      );
+      const extraArgs = script.args ? script.args.trim().split(/\s+/) : [];
+      args = script.path ? [script.path, ...extraArgs] : extraArgs;
+    }
   }
 
   // Git pull before start if gitOnStart is enabled
@@ -342,7 +348,7 @@ function startScript(scriptId) {
   }
 
   const startedAt = Date.now();
-  processes[scriptId] = { process: proc, startedAt };
+  processes[scriptId] = { process: proc, startedAt, intentionallyStopped: false };
   script.status    = 'running';
   script.pid       = proc.pid;
   script.startedAt = startedAt;
@@ -357,8 +363,9 @@ function startScript(scriptId) {
   proc.stderr.on('data', d => appendLog(scriptId, `[ERR] ${d.toString()}`));
 
   proc.on('close', code => {
+    const wasIntentional = processes[scriptId]?.intentionallyStopped || app.isQuitting;
     delete processes[scriptId];
-    const crashed = code !== 0 && code !== null;
+    const crashed = !wasIntentional && code !== 0 && code !== null;
     script.status = 'stopped';
     script.pid    = null;
     if (crashed) {
@@ -387,6 +394,9 @@ function startScript(scriptId) {
 function stopScript(scriptId) {
   const entry = processes[scriptId];
   if (!entry) return { ok: false, error: 'Not running' };
+
+  // Mark as intentional so the close handler doesn't count it as a crash
+  entry.intentionallyStopped = true;
 
   const proc = entry.process;
 
@@ -549,7 +559,7 @@ ipcMain.handle('reset-crash-count', (_, id) => {
 ipcMain.handle('browse-file', async () => {
   const r = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
-    filters: [{ name: 'Scripts', extensions: ['js','py','mjs','ts','sh','bat','ps1'] }, { name: 'All', extensions: ['*'] }],
+    filters: [{ name: 'Scripts', extensions: ['js','py','mjs','ts','sh','bat','ps1','exe'] }, { name: 'All', extensions: ['*'] }],
   });
   return r.canceled ? null : r.filePaths[0];
 });
