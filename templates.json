@@ -1,0 +1,63 @@
+[
+  {
+    "id": "discord-py",
+    "name": "Discord Bot (Python)",
+    "type": "discord-python",
+    "runtime": "python",
+    "notes": "Discord bot using discord.py",
+    "env": [
+      {
+        "k": "DISCORD_TOKEN",
+        "v": "your-token-here"
+      }
+    ]
+  },
+  {
+    "id": "discord-js",
+    "name": "Discord Bot (Node.js)",
+    "type": "discord-node",
+    "runtime": "node",
+    "notes": "Discord bot using discord.js",
+    "env": [
+      {
+        "k": "DISCORD_TOKEN",
+        "v": "your-token-here"
+      }
+    ]
+  },
+  {
+    "id": "express-api",
+    "name": "Express.js API",
+    "type": "node-npm-start",
+    "notes": "Express.js REST API server",
+    "healthCheckEnabled": true,
+    "healthCheckType": "http",
+    "healthCheckUrl": "http://localhost:3000/health",
+    "env": [
+      {
+        "k": "PORT",
+        "v": "3000"
+      }
+    ]
+  },
+  {
+    "id": "flask-api",
+    "name": "Flask API",
+    "type": "python",
+    "runtime": "python",
+    "notes": "Flask REST API server",
+    "healthCheckEnabled": true,
+    "healthCheckType": "http",
+    "healthCheckUrl": "http://localhost:5000/health",
+    "env": [
+      {
+        "k": "FLASK_APP",
+        "v": "app.py"
+      },
+      {
+        "k": "FLASK_ENV",
+        "v": "development"
+      }
+    ]
+  }
+]

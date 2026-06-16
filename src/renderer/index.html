@@ -138,6 +138,17 @@ table.st td{padding:9px 16px;font-size:12px;vertical-align:middle;}
 
 .cron-tag{font-size:11px;font-family:var(--font-mono);color:var(--warn);background:rgba(255,170,51,.1);border:1px solid rgba(255,170,51,.2);padding:2px 6px;border-radius:4px;}
 
+/* ── Group badge ── */
+.group-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;font-family:var(--font-mono);}
+
+/* ── Health status indicator ── */
+.health-ind{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:4px;}
+.health-healthy{color:var(--accent);background:rgba(74,240,160,.1);border:1px solid rgba(74,240,160,.2);}
+.health-unhealthy{color:var(--danger);background:rgba(255,68,102,.1);border:1px solid rgba(255,68,102,.2);}
+
+/* ── Resource limit warning ── */
+.res-warn{color:var(--warn);background:rgba(255,170,51,.1);border:1px solid rgba(255,170,51,.2);}
+
 /* ── Console panel (split) ── */
 #page-console{overflow:hidden;}
 .con-header{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
@@ -199,6 +210,26 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 .env-row{display:flex;gap:6px;align-items:center;}
 .env-row input{flex:1;min-width:0;}
 .env-eq{color:var(--muted);font-family:var(--font-mono);font-weight:700;}
+/* Triggers */
+.trigger-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.04em;}
+.trigger-tag.fw{background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.25);}
+.trigger-tag.pm{background:rgba(255,170,51,.1);color:var(--warn);border:1px solid rgba(255,170,51,.2);}
+.trigger-tag.wh{background:rgba(59,157,224,.1);color:var(--python);border:1px solid rgba(59,157,224,.2);}
+.trigger-tag.cr{background:rgba(74,240,160,.08);color:var(--accent);border:1px solid rgba(74,240,160,.18);}
+.port-test-row{display:flex;gap:8px;align-items:center;margin-top:6px;}
+.port-test-result{font-size:12px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px;}
+.port-test-result.up{background:rgba(74,240,160,.1);color:var(--accent);}
+.port-test-result.down{background:rgba(255,68,102,.1);color:var(--danger);}
+.webhook-url-box{background:var(--panel);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;font-family:var(--font-mono);font-size:11px;color:var(--accent);word-break:break-all;user-select:all;cursor:text;margin-top:6px;}
+.webhook-copy-row{display:flex;gap:8px;align-items:center;margin-top:6px;}
+/* Profiles */
+.profile-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+.profile-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--border2);border:1px solid var(--border3);cursor:pointer;transition:background .15s,border-color .15s;}
+.profile-chip:hover{background:var(--border3);}
+.profile-chip.active{background:rgba(74,240,160,.18);border-color:var(--accent);color:var(--accent);}
+.profile-chip .pchip-del{opacity:.45;margin-left:2px;font-size:10px;line-height:1;padding:0 2px;cursor:pointer;}
+.profile-chip .pchip-del:hover{opacity:1;color:var(--danger);}
+.ibtn.profile-btn{font-size:13px;}
 .xbtn{background:transparent;border:1px solid var(--border2);color:var(--muted);width:26px;height:26px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
 .xbtn:hover{color:var(--danger);border-color:var(--danger);}
 .xbtn svg{width:12px;height:12px;}
@@ -208,6 +239,38 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 
 /* ── Settings ── */
 #page-settings{overflow-y:auto;padding:22px;gap:14px;flex-direction:column;align-items:stretch;}
+#page-marketplace{overflow-y:auto;padding:22px;gap:14px;flex-direction:column;align-items:stretch;}
+#page-collections{overflow-y:auto;padding:22px;gap:14px;flex-direction:column;align-items:stretch;}
+/* Analytics Page */
+#page-analytics{overflow-y:auto;padding:0;flex-direction:column;}
+.an-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;gap:12px;flex-wrap:wrap;}
+.an-hdr h2{font-size:16px;font-weight:700;margin:0;}
+.an-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.an-select{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;outline:none;}
+.an-body{padding:18px 22px;display:flex;flex-direction:column;gap:16px;}
+.an-stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.an-sc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.an-sc .lbl{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.an-sc .val{font-size:22px;font-weight:800;font-family:var(--font-mono);}
+.an-sc .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.an-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+.an-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.an-card-hdr h3{font-size:13px;font-weight:700;margin:0;}
+.an-chart-wrap{position:relative;height:180px;}
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.an-cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
+.an-cost-input{display:flex;flex-direction:column;gap:4px;}
+.an-cost-input label{font-size:11px;color:var(--muted);font-weight:600;}
+.an-cost-input input{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;font-family:var(--font-mono);outline:none;width:100%;}
+.an-cost-result{background:rgba(74,240,160,.06);border:1px solid rgba(74,240,160,.2);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;}
+.an-cost-result .lbl{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+.an-cost-result .val{font-size:20px;font-weight:800;color:var(--accent);font-family:var(--font-mono);}
+.an-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:120px;color:var(--muted);font-size:13px;gap:8px;}
+.an-crash-bar{display:flex;flex-direction:column;gap:6px;}
+.an-crash-row{display:flex;align-items:center;gap:10px;font-size:12px;}
+.an-crash-bar-fill{height:8px;border-radius:4px;background:var(--danger);transition:width .4s;}
+.an-crash-name{width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600;}
+.an-crash-count{width:32px;text-align:right;color:var(--muted);font-family:var(--font-mono);font-size:11px;}
 .scard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;width:100%;min-width:0;}
 .scard h3{font-size:14px;font-weight:700;margin-bottom:12px;}
 .ref-tbl{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;}
@@ -224,7 +287,9 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+.col-drag-over{box-shadow:0 0 0 2px var(--accent);transform:scale(1.01);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -233,7 +298,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 <div id="titlebar">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3" stroke-width="1.5"/><path d="M13 14h4" stroke-width="1.5"/></svg>
-    ScriptManager <span class="sub">v1.2</span>
+    ScriptManager <span class="sub">v1.5</span>
   </div>
   <div class="winbtns">
     <button class="winbtn min"   onclick="window.api.minimize()"></button>
@@ -263,12 +328,24 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
     Logs
   </div>
+  <div class="nav-item" data-page="analytics">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Analytics
+  </div>
+  <div class="nav-item" data-page="collections">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    Collections
+  </div>
+  <div class="nav-item" data-page="marketplace">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    Marketplace
+  </div>
   <div class="nav-item" data-page="settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Settings
   </div>
   <div class="sidebar-spacer"></div>
-  <div class="sidebar-footer">ScriptManager v1.2.0</div>
+  <div class="sidebar-footer">ScriptManager v1.5.0</div>
 </div>
 
 <!-- Content -->
@@ -313,7 +390,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
     <div class="stbl-wrap">
       <table class="st">
         <thead><tr>
-          <th>Name</th><th>Type</th><th>Runtime</th><th>Status</th><th>Uptime</th><th>CPU</th><th>RAM</th><th>Crashes</th><th>Schedule</th><th>Actions</th>
+          <th>Name</th><th>Type</th><th>Runtime</th><th>Status</th><th>Uptime</th><th>CPU</th><th>RAM</th><th>Crashes</th><th>Triggers</th><th>Actions</th>
         </tr></thead>
         <tbody id="scripts-tbody"></tbody>
       </table>
@@ -354,6 +431,78 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
       </div>
     </div>
     <div id="log-out"><div class="ll-empty">Select a script above to view its output.</div></div>
+  </div>
+
+  <!-- Analytics -->
+  <div class="page" id="page-analytics">
+    <div class="an-hdr">
+      <h2>📊 Analytics</h2>
+      <div class="an-controls">
+        <select class="an-select" id="an-script-sel"><option value="">All Scripts</option></select>
+        <select class="an-select" id="an-range-sel">
+          <option value="1h">Last 1 hour</option>
+          <option value="6h">Last 6 hours</option>
+          <option value="24h" selected>Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="an-refresh-btn">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="an-body">
+      <!-- Summary stat cards -->
+      <div class="an-stat-row" id="an-stat-row"></div>
+
+      <!-- CPU + RAM charts side by side -->
+      <div class="an-grid">
+        <div class="an-card">
+          <div class="an-card-hdr">
+            <h3>CPU Usage %</h3>
+            <span id="an-cpu-avg" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="an-cpu-chart"></canvas></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hdr">
+            <h3>RAM Usage (MB)</h3>
+            <span id="an-mem-avg" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span>
+          </div>
+          <div class="an-chart-wrap"><canvas id="an-mem-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Crash trends + Uptime % -->
+      <div class="an-grid">
+        <div class="an-card">
+          <div class="an-card-hdr"><h3>Crash Trends</h3></div>
+          <div id="an-crash-content"></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card-hdr"><h3>Uptime % by Script</h3></div>
+          <div class="an-chart-wrap"><canvas id="an-uptime-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Cost Estimator -->
+      <div class="an-card">
+        <div class="an-card-hdr"><h3>💰 Cost Estimator (Cloud VM)</h3></div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Estimate your monthly cloud VM cost based on resource usage. Enter your VM's hourly rate and CPU/RAM specs.</div>
+        <div class="an-cost-grid">
+          <div class="an-cost-input">
+            <label>Hourly Rate (USD/hr)</label>
+            <input type="number" id="an-cost-rate" value="0.048" step="0.001" min="0" placeholder="e.g. 0.048"/>
+          </div>
+          <div class="an-cost-input">
+            <label>VM Total CPU Cores</label>
+            <input type="number" id="an-cost-cores" value="4" min="1" placeholder="e.g. 4"/>
+          </div>
+          <div class="an-cost-input">
+            <label>VM Total RAM (MB)</label>
+            <input type="number" id="an-cost-ram" value="8192" min="256" placeholder="e.g. 8192"/>
+          </div>
+        </div>
+        <div class="an-cost-grid" style="margin-top:12px;" id="an-cost-results"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Settings -->
@@ -409,6 +558,101 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
     </div>
 
     <div class="scard">
+      <h3>📢 Notification Channels</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Get alerts even when away from your PC. Each channel can be enabled independently.</p>
+
+      <!-- ── Email (SMTP) ── -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">📧 Email Alerts (SMTP)</div>
+          <label class="tgl"><input type="checkbox" id="smtp-enabled" onchange="smtpToggle(this.checked)"/><span class="tgl-sl"></span></label>
+        </div>
+        <div id="smtp-fields" style="display:none;flex-direction:column;gap:8px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="fg"><label>SMTP Host</label><input type="text" id="smtp-host" placeholder="smtp.gmail.com"/></div>
+            <div class="fg"><label>Port</label><input type="number" id="smtp-port" placeholder="587" value="587"/></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="fg"><label>Username / Email</label><input type="text" id="smtp-user" placeholder="you@gmail.com"/></div>
+            <div class="fg"><label>Password / App Password</label><input type="password" id="smtp-pass" placeholder="••••••••"/></div>
+          </div>
+          <div class="fg"><label>Send Alerts To</label><input type="text" id="smtp-alert-email" placeholder="alerts@example.com (leave blank to use username)"/></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
+              <input type="checkbox" id="smtp-secure"/> TLS/SSL (port 465)
+            </label>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="btn btn-ghost btn-sm" onclick="saveSmtpSettings()">💾 Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="testSmtp()">📤 Test Email</button>
+            <span id="smtp-status" style="font-size:11px;color:var(--muted);align-self:center;font-family:var(--font-mono);"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Discord ── -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">🎮 Discord Webhook</div>
+          <label class="tgl"><input type="checkbox" id="discord-enabled" onchange="discordToggle(this.checked)"/><span class="tgl-sl"></span></label>
+        </div>
+        <div id="discord-fields" style="display:none;flex-direction:column;gap:8px;">
+          <div class="fg"><label>Webhook URL</label><input type="text" id="discord-url" placeholder="https://discord.com/api/webhooks/..."/></div>
+          <div style="font-size:11px;color:var(--muted);">Server Settings → Integrations → Webhooks → New Webhook → Copy URL</div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="btn btn-ghost btn-sm" onclick="saveDiscordSettings()">💾 Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="testDiscord()">📤 Test</button>
+            <span id="discord-status" style="font-size:11px;color:var(--muted);align-self:center;font-family:var(--font-mono);"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Slack ── -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">💬 Slack Integration</div>
+          <label class="tgl"><input type="checkbox" id="slack-enabled" onchange="slackToggle(this.checked)"/><span class="tgl-sl"></span></label>
+        </div>
+        <div id="slack-fields" style="display:none;flex-direction:column;gap:8px;">
+          <div class="fg"><label>Incoming Webhook URL</label><input type="text" id="slack-url" placeholder="https://hooks.slack.com/services/..."/></div>
+          <div style="font-size:11px;color:var(--muted);">api.slack.com/apps → Create App → Incoming Webhooks → Add New Webhook to Workspace</div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="btn btn-ghost btn-sm" onclick="saveSlackSettings()">💾 Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="testSlack()">📤 Test</button>
+            <span id="slack-status" style="font-size:11px;color:var(--muted);align-self:center;font-family:var(--font-mono);"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Custom Webhook ── -->
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">🔗 Custom Webhook URL</div>
+          <label class="tgl"><input type="checkbox" id="cwh-enabled" onchange="cwhToggle(this.checked)"/><span class="tgl-sl"></span></label>
+        </div>
+        <div id="cwh-fields" style="display:none;flex-direction:column;gap:8px;">
+          <div class="fg"><label>Webhook URL (http or https)</label><input type="text" id="cwh-url" placeholder="https://your-server.com/hook"/></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="fg">
+              <label>Method</label>
+              <select id="cwh-method">
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+              </select>
+            </div>
+            <div class="fg"><label>Secret Header (optional)</label><input type="text" id="cwh-secret" placeholder="X-ScriptManager-Secret value"/></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);">Payload: <code style="background:var(--bg);padding:2px 5px;border-radius:3px;">{ title, body, scriptName, scriptPath, timestamp, source }</code></div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="btn btn-ghost btn-sm" onclick="saveCwhSettings()">💾 Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="testCwh()">📤 Test</button>
+            <span id="cwh-status" style="font-size:11px;color:var(--muted);align-self:center;font-family:var(--font-mono);"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scard">
       <h3>About ScriptManager</h3>
       <p style="font-size:13px;color:var(--muted);line-height:1.7;">Local desktop manager for Node.js, Python, Batch and PowerShell scripts on Windows — no Docker, no containers. Minimises to system tray. Scripts are stored next to the .exe so they are easy to back up and move between machines.</p>
     </div>
@@ -445,6 +689,130 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
       </table>
     </div>
 
+  </div>
+
+  <!-- Collections -->
+  <div class="page" id="page-collections">
+
+    <!-- Header row -->
+    <div class="scard" style="flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h3 style="margin:0 0 4px;">📦 Script Collections</h3>
+          <div style="font-size:12px;color:var(--muted);">Bundle related scripts and start them all with one click</div>
+        </div>
+        <button class="btn btn-accent btn-sm" onclick="colShowCreate()">＋ New Collection</button>
+      </div>
+    </div>
+
+    <!-- Create / Edit modal-inline panel -->
+    <div id="col-edit-panel" class="scard" style="display:none;flex-shrink:0;">
+      <h3 id="col-edit-title">＋ New Collection</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;">
+          <div class="fg"><label>Collection Name</label><input type="text" id="col-name" placeholder="Development Stack"/></div>
+          <div class="fg" style="min-width:90px;">
+            <label>Colour</label>
+            <input type="color" id="col-color" value="#4af0a0" style="width:100%;height:36px;border:1px solid var(--border);border-radius:5px;background:var(--panel);cursor:pointer;padding:2px 4px;"/>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Startup Order</label>
+          <select id="col-order" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;width:100%;">
+            <option value="sequential">Sequential — start one by one (2 s gap)</option>
+            <option value="parallel">Parallel — start all at once</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Scripts in this collection</label>
+          <div id="col-script-picker" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Tick scripts to include. Drag to reorder (sequential mode respects this order).</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn btn-accent btn-sm" onclick="colSave()">💾 Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="colCancelEdit()">Cancel</button>
+          <span id="col-edit-status" style="font-size:11px;color:var(--muted);align-self:center;font-family:var(--font-mono);"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collections list -->
+    <div id="col-list" style="display:flex;flex-direction:column;gap:12px;flex-shrink:0;"></div>
+    <div id="col-empty" style="display:none;text-align:center;color:var(--muted);padding:60px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">📦</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px;">No collections yet</div>
+      <div style="font-size:12px;">Create a collection to bundle related scripts and launch them all at once.</div>
+    </div>
+
+  </div>
+
+  <!-- Marketplace -->
+  <div class="page" id="page-marketplace">
+    <div class="scard" style="flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h3 style="margin:0 0 4px;">🌐 Script Marketplace</h3>
+          <div style="font-size:12px;color:var(--muted);">Import scripts from URLs or GitHub · Share your own configs as templates</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="mkRefresh()">🔄 Refresh</button>
+          <button class="btn btn-accent btn-sm" onclick="mkShowImport()">📥 Import from URL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import from URL panel (hidden by default) -->
+    <div id="mk-import-panel" class="scard" style="display:none;flex-shrink:0;">
+      <h3>📥 Import Script</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="fg">
+          <label>URL to JSON script definition</label>
+          <input type="text" id="mk-import-url" placeholder="https://raw.githubusercontent.com/user/repo/main/script.json" style="font-family:var(--font-mono);font-size:12px;"/>
+        </div>
+        <div style="font-size:11px;color:var(--muted);">Paste a direct link to a raw .json file following the ScriptManager share format. GitHub URLs are auto-converted to raw links.</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-accent btn-sm" onclick="mkImportFromUrl()">📥 Import</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mk-import-panel').style.display='none'">Cancel</button>
+          <span id="mk-import-status" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share a script panel -->
+    <div class="scard" style="flex-shrink:0;">
+      <h3>📤 Share a Script</h3>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Export any of your scripts as a shareable JSON template that others can import.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="mk-share-select" style="flex:1;min-width:180px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;">
+          <option value="">— pick a script —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="mkExportScript()">📋 Copy JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="mkDownloadScript()">💾 Download .json</button>
+        <span id="mk-share-status" style="font-size:11px;color:var(--accent);font-family:var(--font-mono);"></span>
+      </div>
+      <div id="mk-export-preview" style="display:none;margin-top:10px;">
+        <textarea id="mk-export-json" readonly style="width:100%;height:160px;background:var(--bg);color:var(--accent);border:1px solid var(--border);border-radius:5px;padding:10px;font-family:var(--font-mono);font-size:11px;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+    </div>
+
+    <!-- Community Templates -->
+    <div class="scard" style="flex:1;min-height:0;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin:0;">⭐ Community Templates</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="mk-search" placeholder="Search templates…" oninput="mkFilterTemplates()" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:6px 10px;font-size:12px;width:180px;"/>
+          <select id="mk-filter-type" onchange="mkFilterTemplates()" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:6px 8px;font-size:12px;">
+            <option value="">All types</option>
+            <option value="node">Node.js</option>
+            <option value="python">Python</option>
+            <option value="batch">Batch</option>
+            <option value="powershell">PowerShell</option>
+          </select>
+        </div>
+      </div>
+      <div id="mk-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;overflow-y:auto;padding-right:4px;"></div>
+      <div id="mk-empty" style="display:none;text-align:center;color:var(--muted);padding:40px;font-size:13px;">No templates match your filter.</div>
+    </div>
   </div>
 
 </div></div></div>
@@ -610,6 +978,228 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
       </div>
 
       <hr class="mdiv"/>
+      <div class="msect">Script Dependencies</div>
+
+      <div class="fg">
+        <label>Start After Scripts <span style="font-weight:400;opacity:.6;">(optional)</span></label>
+        <select id="f-dependencies" multiple style="min-height:80px;">
+        </select>
+        <div class="hint">Hold Ctrl to select multiple scripts. This script will wait for selected scripts to start before starting.</div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Output Parsing & Actions</div>
+
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">🔍 Enable Output Monitoring</div>
+          <div class="tgl-d">Watch for patterns in script output and take actions.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-output-en" onchange="toggleOutput()"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="output-group" style="display:none;">
+        <div id="output-patterns-list"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-add-pattern" style="align-self:flex-start;margin-top:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Pattern
+        </button>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Organization</div>
+
+      <div class="fg">
+        <label>Group / Category</label>
+        <select id="f-group">
+          <option value="default">Uncategorized</option>
+        </select>
+        <div class="hint">Organize scripts into groups for better management.</div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Script Triggers ⚡</div>
+
+      <!-- File Watcher -->
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">📁 File Watcher</div>
+          <div class="tgl-d">Run an action when a file or folder changes.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-fw-en" onchange="toggleTrigger('fw')"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="fw-group" style="display:none;">
+        <div class="fg">
+          <label>Watch Path</label>
+          <div class="irow">
+            <input type="text" id="f-fw-path" placeholder="C:\project\src  or  C:\config.json"/>
+            <button class="btn btn-ghost btn-sm" id="btn-browse-fw">Browse</button>
+          </div>
+          <div class="hint">Watch a file or an entire folder for changes.</div>
+        </div>
+        <div class="fg">
+          <label>Action on Change</label>
+          <select id="f-fw-action">
+            <option value="restart">Restart script</option>
+            <option value="start">Start script (if stopped)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Debounce (ms)</label>
+          <input type="number" id="f-fw-debounce" value="1000" min="100" max="30000"/>
+          <div class="hint">Wait this long after last change before acting. Prevents rapid restarts.</div>
+        </div>
+      </div>
+
+      <!-- Port Monitor -->
+      <div class="tgl-row" style="margin-top:10px;">
+        <div class="tgl-info">
+          <div class="tgl-t">🔌 Port Monitor</div>
+          <div class="tgl-d">Restart if a local port stops responding.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-pm-en" onchange="toggleTrigger('pm')"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="pm-group" style="display:none;">
+        <div class="fg">
+          <label>Port Number</label>
+          <div class="port-test-row">
+            <input type="number" id="f-pm-port" placeholder="3000" min="1" max="65535" style="width:120px;"/>
+            <button class="btn btn-ghost btn-sm" id="btn-test-port">Test Port</button>
+            <span id="port-test-result" class="port-test-result" style="display:none;"></span>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Action on Failure</label>
+          <select id="f-pm-action">
+            <option value="restart">Restart script</option>
+            <option value="alert">Alert only (log)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Check Interval (seconds)</label>
+          <input type="number" id="f-pm-interval" value="30" min="5" max="300"/>
+        </div>
+      </div>
+
+      <!-- Webhook -->
+      <div class="tgl-row" style="margin-top:10px;">
+        <div class="tgl-info">
+          <div class="tgl-t">🌐 API Webhook</div>
+          <div class="tgl-d">Trigger via HTTP POST from any external service.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-wh-en" onchange="toggleTrigger('wh')"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="wh-group" style="display:none;">
+        <div class="fg">
+          <label>Webhook Token</label>
+          <div class="irow">
+            <input type="text" id="f-wh-token" placeholder="auto-generated" style="font-family:var(--font-mono);font-size:12px;"/>
+            <button class="btn btn-ghost btn-sm" id="btn-gen-token">🔄 Generate</button>
+          </div>
+          <div class="hint">Keep this secret — anyone with this URL can trigger your script.</div>
+        </div>
+        <div class="fg">
+          <label>Default Action</label>
+          <select id="f-wh-action">
+            <option value="start">Start script</option>
+            <option value="restart">Restart script</option>
+            <option value="stop">Stop script</option>
+          </select>
+          <div class="hint">Can be overridden per-request with <code style="color:var(--accent);">{"action":"restart"}</code> in the POST body.</div>
+        </div>
+        <div class="fg" id="wh-url-group" style="display:none;">
+          <label>Your Webhook URL</label>
+          <div class="webhook-url-box" id="wh-url-display">—</div>
+          <div class="webhook-copy-row">
+            <button class="btn btn-ghost btn-sm" id="btn-copy-webhook">📋 Copy URL</button>
+            <span style="font-size:11px;color:var(--muted);">POST to this URL to trigger the action</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Resource Limits & Alerts</div>
+
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">⚠️ Enable Resource Monitoring</div>
+          <div class="tgl-d">Monitor CPU and RAM usage and take action when limits are exceeded.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-res-en" onchange="toggleResLimits()"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="res-group" style="display:none;">
+        <div class="fr2">
+          <div class="fg">
+            <label>CPU Limit (%)</label>
+            <input type="number" id="f-cpu-limit" placeholder="90" min="1" max="100" value="90"/>
+            <div class="hint">Alert when CPU usage exceeds this %</div>
+          </div>
+          <div class="fg">
+            <label>RAM Limit (MB)</label>
+            <input type="number" id="f-mem-limit" placeholder="1024" min="1" value="1024"/>
+            <div class="hint">Alert when memory exceeds this amount</div>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Action on Limit Exceeded</label>
+          <select id="f-res-action">
+            <option value="alert">Alert Only (notify and log)</option>
+            <option value="restart">Auto-Restart</option>
+            <option value="stop">Auto-Stop</option>
+          </select>
+          <div class="hint">What to do when a resource limit is exceeded.</div>
+        </div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Health Checks</div>
+
+      <div class="tgl-row">
+        <div class="tgl-info">
+          <div class="tgl-t">💊 Enable Health Checks</div>
+          <div class="tgl-d">Periodically check if the script is healthy and responding.</div>
+        </div>
+        <label class="tgl"><input type="checkbox" id="f-health-en" onchange="toggleHealth()"/><span class="tgl-sl"></span></label>
+      </div>
+      <div id="health-group" style="display:none;">
+        <div class="fr2">
+          <div class="fg">
+            <label>Check Type</label>
+            <select id="f-health-type" onchange="toggleHealthType()">
+              <option value="process">Process Check (is it running?)</option>
+              <option value="http">HTTP Endpoint</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Check Interval (seconds)</label>
+            <input type="number" id="f-health-interval" placeholder="60" min="10" value="60"/>
+          </div>
+        </div>
+        <div class="fg" id="health-url-group" style="display:none;">
+          <label>Health Check URL</label>
+          <input type="text" id="f-health-url" placeholder="http://localhost:3000/health"/>
+          <div class="hint">The endpoint should return HTTP 200-299 when healthy.</div>
+        </div>
+        <div class="fg">
+          <label>Action on Health Check Failure</label>
+          <select id="f-health-action">
+            <option value="alert">Alert Only (notify and log)</option>
+            <option value="restart">Auto-Restart</option>
+            <option value="stop">Auto-Stop</option>
+          </select>
+          <div class="hint">What to do when health check fails.</div>
+        </div>
+      </div>
+
+      <hr class="mdiv"/>
+      <div class="msect">Script Profiles / Environments 🔄</div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:8px;">Save the current config (env vars, args, cwd) as a named profile. Switch between Dev/Staging/Prod in one click.</div>
+      <div class="profile-bar" id="profile-chips"></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="f-profile-name" placeholder="e.g. dev, staging, prod" style="width:160px;"/>
+        <button class="btn btn-ghost btn-sm" id="btn-save-profile">💾 Save as Profile</button>
+      </div>
+
+      <hr class="mdiv"/>
       <div class="msect">Environment Variables</div>
       <div class="env-ed" id="env-ed"></div>
       <button class="btn btn-ghost btn-sm" id="btn-add-env" style="align-self:flex-start;margin-top:4px;">
@@ -666,22 +1256,18 @@ window.addEventListener('beforeunload', () => {
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('page-' + el.dataset.page).classList.add('active');
-    // Refresh settings page data every time it's opened
-    if (el.dataset.page === 'settings') {
-      loadConfigPaths();
-      loadStartupState();
-    }
+    if (el.dataset.page) gotoPage(el.dataset.page);
   });
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
+let groups = [];
+
 async function init() {
   scripts = await window.api.getScripts();
+  groups = await window.api.getGroups();
   renderAll();
+  populateGroupDropdown();
 
   window.api.onLog(({ scriptId, text, ts }) => {
     if (!logBuffers[scriptId]) logBuffers[scriptId] = [];
@@ -718,6 +1304,14 @@ async function init() {
     if (uptEl) uptEl.textContent = fmtUptime(uptime);
   });
 
+  window.api.onHealthUpdate(({ scriptId, healthy }) => {
+    const s = scripts.find(x => x.id === scriptId);
+    if (s) {
+      s.healthStatus = healthy ? 'healthy' : 'unhealthy';
+      renderAll();
+    }
+  });
+
   // Uptime ticker for dashboard
   uptimeTick = setInterval(() => {
     document.querySelectorAll('[data-upt]').forEach(el => {
@@ -725,6 +1319,17 @@ async function init() {
       if (sc) el.textContent = fmtUptime(sc.uptime + (Date.now() - (sc._ts || Date.now())));
     });
   }, 1000);
+}
+
+function populateGroupDropdown() {
+  const sel = document.getElementById('f-group');
+  sel.innerHTML = '';
+  groups.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.name;
+    sel.appendChild(opt);
+  });
 }
 
 function renderAll() {
@@ -737,7 +1342,7 @@ function renderAll() {
   document.getElementById('st-stopped').textContent = total - running;
   document.getElementById('st-crashes').textContent = crashes;
   document.getElementById('st-cron').textContent    = scripts.filter(s => s.cronEnabled).length;
-  renderDash(); renderTable(); refreshSelects();
+  renderDash(); renderTable(); refreshSelects(); refreshAnScriptSel();
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -942,8 +1547,23 @@ function _appendLine(container, text, ts, scroll) {
 function gotoPage(name) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelector(`[data-page=${name}]`).classList.add('active');
-  document.getElementById(`page-${name}`).classList.add('active');
+  const navEl = document.querySelector(`[data-page=${name}]`);
+  if (navEl) navEl.classList.add('active');
+  const pageEl = document.getElementById(`page-${name}`);
+  if (pageEl) pageEl.classList.add('active');
+  // Page-specific init/refresh
+  if (name === 'settings') {
+    loadConfigPaths();
+    loadStartupState();
+    loadNotificationSettings();
+  } else if (name === 'collections') {
+    colInit();
+  } else if (name === 'marketplace') {
+    mkInit();
+  } else if (name === 'analytics') {
+    refreshAnScriptSel();
+    renderAnalytics();
+  }
 }
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
@@ -966,10 +1586,60 @@ function openModal(id=null) {
   document.getElementById('f-git-dir').value        = s?.gitDir || '';
   document.getElementById('f-git-branch').value     = s?.gitBranch || '';
   document.getElementById('f-git-on-start').checked = s?.gitOnStart || false;
+  
+  // Groups
+  document.getElementById('f-group').value = s?.groupId || 'default';
+  
+  // Resource Limits
+  document.getElementById('f-res-en').checked = s?.resourceLimitsEnabled || false;
+  document.getElementById('f-cpu-limit').value = s?.cpuLimit || 90;
+  document.getElementById('f-mem-limit').value = s?.memLimit || 1024;
+  document.getElementById('f-res-action').value = s?.resourceAction || 'alert';
+  
+  // Health Checks
+  document.getElementById('f-health-en').checked = s?.healthCheckEnabled || false;
+  document.getElementById('f-health-type').value = s?.healthCheckType || 'process';
+  document.getElementById('f-health-url').value = s?.healthCheckUrl || '';
+  document.getElementById('f-health-interval').value = s?.healthCheckInterval || 60;
+  document.getElementById('f-health-action').value = s?.healthCheckAction || 'alert';
+  
+  // Dependencies
+  populateDependencies(s?.id);
+  if (s?.dependencies) {
+    const sel = document.getElementById('f-dependencies');
+    Array.from(sel.options).forEach(opt => {
+      if (s.dependencies.includes(opt.value)) opt.selected = true;
+    });
+  }
+  
+  // Output Patterns
+  document.getElementById('f-output-en').checked = s?.outputPatterns && s.outputPatterns.length > 0;
+  renderOutputPatterns(s?.outputPatterns || []);
+
+  // Triggers
+  document.getElementById('f-fw-en').checked         = s?.fileWatchEnabled || false;
+  document.getElementById('f-fw-path').value          = s?.fileWatchPath || '';
+  document.getElementById('f-fw-action').value        = s?.fileWatchAction || 'restart';
+  document.getElementById('f-fw-debounce').value      = s?.fileWatchDebounce || 1000;
+  document.getElementById('f-pm-en').checked          = s?.portMonitorEnabled || false;
+  document.getElementById('f-pm-port').value          = s?.portMonitorPort || '';
+  document.getElementById('f-pm-action').value        = s?.portMonitorAction || 'restart';
+  document.getElementById('f-pm-interval').value      = s?.portMonitorInterval || 30;
+  document.getElementById('f-wh-en').checked          = s?.webhookEnabled || false;
+  document.getElementById('f-wh-token').value         = s?.webhookToken || '';
+  document.getElementById('f-wh-action').value        = s?.webhookAction || 'start';
+  document.getElementById('port-test-result').style.display = 'none';
+  toggleTrigger('fw'); toggleTrigger('pm'); toggleTrigger('wh');
+  if (s?.webhookEnabled && s?.webhookToken) updateWebhookUrl(s.webhookToken);
+
   toggleGit();
+  toggleResLimits();
+  toggleHealth();
+  toggleOutput();
   onTypeChange(); // update form fields (hides path vs shows folder picker)
   updateARHint(); toggleCron(); renderEnvEd(s?.env||[]);
   if (s?.cwd) document.getElementById('f-cwd').value = s.cwd; // restore after onTypeChange
+  loadProfileChips(id); // load profiles for this script
   document.getElementById('modal-overlay').classList.add('open');
   setTimeout(()=>document.getElementById('f-name').focus(), 50);
 }
@@ -980,6 +1650,21 @@ function toggleCron() {
 }
 function toggleGit() {
   document.getElementById('git-group').style.display = document.getElementById('f-git-en').checked?'':'none';
+}
+function toggleResLimits() {
+  document.getElementById('res-group').style.display = document.getElementById('f-res-en').checked?'':'none';
+}
+function toggleHealth() {
+  const enabled = document.getElementById('f-health-en').checked;
+  document.getElementById('health-group').style.display = enabled?'':'none';
+  if (enabled) toggleHealthType();
+}
+function toggleHealthType() {
+  const type = document.getElementById('f-health-type').value;
+  document.getElementById('health-url-group').style.display = type==='http'?'':'none';
+}
+function toggleOutput() {
+  document.getElementById('output-group').style.display = document.getElementById('f-output-en').checked?'':'none';
 }
 const NPM_TYPES = ['node-npm-start', 'node-npm-dev'];
 function onTypeChange() {
@@ -1076,6 +1761,30 @@ document.getElementById('modal-save').addEventListener('click', async()=>{
     gitDir:        document.getElementById('f-git-dir').value.trim(),
     gitBranch:     document.getElementById('f-git-branch').value.trim(),
     gitOnStart:    document.getElementById('f-git-on-start').checked,
+    groupId:       document.getElementById('f-group').value,
+    dependencies:  collectDependencies(),
+    resourceLimitsEnabled: document.getElementById('f-res-en').checked,
+    cpuLimit:      parseInt(document.getElementById('f-cpu-limit').value)||90,
+    memLimit:      parseInt(document.getElementById('f-mem-limit').value)||1024,
+    resourceAction: document.getElementById('f-res-action').value,
+    healthCheckEnabled: document.getElementById('f-health-en').checked,
+    healthCheckType: document.getElementById('f-health-type').value,
+    healthCheckUrl:  document.getElementById('f-health-url').value.trim(),
+    healthCheckInterval: parseInt(document.getElementById('f-health-interval').value)||60,
+    healthCheckAction: document.getElementById('f-health-action').value,
+    outputPatterns: collectOutputPatterns(),
+    // Triggers
+    fileWatchEnabled:  document.getElementById('f-fw-en').checked,
+    fileWatchPath:     document.getElementById('f-fw-path').value.trim(),
+    fileWatchAction:   document.getElementById('f-fw-action').value,
+    fileWatchDebounce: parseInt(document.getElementById('f-fw-debounce').value) || 1000,
+    portMonitorEnabled:  document.getElementById('f-pm-en').checked,
+    portMonitorPort:     parseInt(document.getElementById('f-pm-port').value) || null,
+    portMonitorAction:   document.getElementById('f-pm-action').value,
+    portMonitorInterval: parseInt(document.getElementById('f-pm-interval').value) || 30,
+    webhookEnabled: document.getElementById('f-wh-en').checked,
+    webhookToken:   document.getElementById('f-wh-token').value.trim(),
+    webhookAction:  document.getElementById('f-wh-action').value,
   };
   if(editingId){
     data.id=editingId;
@@ -1088,7 +1797,147 @@ document.getElementById('modal-save').addEventListener('click', async()=>{
 });
 const openEdit = id => openModal(id);
 
-// ─── Env editor ───────────────────────────────────────────────────────────────
+// ─── Script Triggers ──────────────────────────────────────────────────────────
+function toggleTrigger(type) {
+  const enabled = document.getElementById(`f-${type}-en`).checked;
+  document.getElementById(`${type}-group`).style.display = enabled ? '' : 'none';
+}
+
+async function updateWebhookUrl(token) {
+  if (!token) { document.getElementById('wh-url-group').style.display = 'none'; return; }
+  const { port } = await window.api.getWebhookPort();
+  const url = `http://127.0.0.1:${port}/webhook/${token}`;
+  document.getElementById('wh-url-display').textContent = url;
+  document.getElementById('wh-url-group').style.display = '';
+}
+
+document.getElementById('btn-gen-token').addEventListener('click', async () => {
+  const { token } = await window.api.generateWebhookToken();
+  document.getElementById('f-wh-token').value = token;
+  updateWebhookUrl(token);
+});
+
+document.getElementById('f-wh-token').addEventListener('input', e => {
+  updateWebhookUrl(e.target.value.trim());
+});
+
+document.getElementById('f-wh-en').addEventListener('change', async () => {
+  toggleTrigger('wh');
+  if (document.getElementById('f-wh-en').checked && !document.getElementById('f-wh-token').value) {
+    const { token } = await window.api.generateWebhookToken();
+    document.getElementById('f-wh-token').value = token;
+    updateWebhookUrl(token);
+  }
+});
+
+document.getElementById('btn-copy-webhook').addEventListener('click', () => {
+  const url = document.getElementById('wh-url-display').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('btn-copy-webhook');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  });
+});
+
+document.getElementById('btn-browse-fw').addEventListener('click', async () => {
+  const p = await window.api.browseFolder();
+  if (p) document.getElementById('f-fw-path').value = p;
+});
+
+document.getElementById('btn-test-port').addEventListener('click', async () => {
+  const port = parseInt(document.getElementById('f-pm-port').value);
+  if (!port) return;
+  const btn = document.getElementById('btn-test-port');
+  btn.textContent = 'Testing…'; btn.disabled = true;
+  const res = await window.api.testPort(port);
+  btn.textContent = 'Test Port'; btn.disabled = false;
+  const el = document.getElementById('port-test-result');
+  el.style.display = '';
+  el.className = 'port-test-result ' + (res.listening ? 'up' : 'down');
+  el.textContent = res.listening ? `✓ Port ${port} is open` : `✗ Port ${port} not responding`;
+});
+
+// Trigger tags in script rows
+function triggerTags(s) {
+  const tags = [];
+  if (s.fileWatchEnabled && s.fileWatchPath)  tags.push(`<span class="trigger-tag fw" title="File Watcher: ${esc(s.fileWatchPath)}">📁 Watch</span>`);
+  if (s.portMonitorEnabled && s.portMonitorPort) tags.push(`<span class="trigger-tag pm" title="Port Monitor: ${s.portMonitorPort}">🔌 :${s.portMonitorPort}</span>`);
+  if (s.webhookEnabled && s.webhookToken)     tags.push(`<span class="trigger-tag wh" title="Webhook enabled">🌐 Hook</span>`);
+  if (s.cronEnabled && s.cronSchedule)        tags.push(`<span class="trigger-tag cr" title="Cron: ${esc(s.cronSchedule)}">⏰ ${esc(s.cronSchedule)}</span>`);
+  return tags.join('');
+}
+
+// ─── Profiles / Environments ──────────────────────────────────────────────────
+let profilesCache = {};  // profiles for the script currently open in modal
+
+async function loadProfileChips(scriptId) {
+  profilesCache = scriptId ? (await window.api.getProfiles(scriptId) || {}) : {};
+  renderProfileChips(scriptId);
+}
+
+function renderProfileChips(scriptId) {
+  const container = document.getElementById('profile-chips');
+  const names = Object.keys(profilesCache);
+  if (!names.length) {
+    container.innerHTML = `<span style="color:var(--muted2);font-size:11px;">No profiles yet — fill in your config below and save one.</span>`;
+    return;
+  }
+  container.innerHTML = names.map(n => `
+    <span class="profile-chip" onclick="applyProfileChip('${esc(n)}','${scriptId||''}')" title="Apply profile: ${esc(n)}">
+      ${esc(n)}
+      <span class="pchip-del" onclick="event.stopPropagation();deleteProfileChip('${esc(n)}','${scriptId||''}')" title="Delete profile">✕</span>
+    </span>`).join('');
+}
+
+async function applyProfileChip(profileName, scriptId) {
+  if (!scriptId) return;
+  // Apply to the live script immediately
+  await window.api.applyProfile(scriptId, profileName);
+  // Also load profile values into modal fields so the user sees what switched
+  const p = profilesCache[profileName];
+  if (!p) return;
+  if (p.env   !== undefined) renderEnvEd(p.env);
+  if (p.args  !== undefined) document.getElementById('f-args').value = p.args;
+  if (p.cwd   !== undefined) document.getElementById('f-cwd').value  = p.cwd;
+  // Visual feedback
+  document.querySelectorAll('#profile-chips .profile-chip').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim().replace('✕','').trim() === profileName);
+  });
+  // Update scripts array so the row reflects the active profile label
+  const idx = scripts.findIndex(s => s.id === scriptId);
+  if (idx !== -1) scripts[idx].activeProfile = profileName;
+  renderAll();
+}
+
+async function deleteProfileChip(profileName, scriptId) {
+  if (!scriptId) return;
+  if (!confirm(`Delete profile "${profileName}"?`)) return;
+  await window.api.deleteProfile(scriptId, profileName);
+  delete profilesCache[profileName];
+  renderProfileChips(scriptId);
+  const idx = scripts.findIndex(s => s.id === scriptId);
+  if (idx !== -1 && scripts[idx].activeProfile === profileName) scripts[idx].activeProfile = null;
+  renderAll();
+}
+
+document.getElementById('btn-save-profile').addEventListener('click', async () => {
+  const name = document.getElementById('f-profile-name').value.trim();
+  if (!name) { document.getElementById('f-profile-name').focus(); return; }
+  if (!editingId) { alert('Save the script first, then create profiles for it.'); return; }
+  const config = {
+    env:  collectEnv(),
+    args: document.getElementById('f-args').value.trim(),
+    cwd:  document.getElementById('f-cwd').value.trim(),
+  };
+  await window.api.saveProfile(editingId, name, config);
+  profilesCache[name] = config;
+  document.getElementById('f-profile-name').value = '';
+  renderProfileChips(editingId);
+});
+
+
 function renderEnvEd(arr) { document.getElementById('env-ed').innerHTML=''; (arr||[]).forEach(({k,v})=>addEnvRow(k,v)); }
 function addEnvRow(k='',v='') {
   const ed=document.getElementById('env-ed');
@@ -1102,6 +1951,59 @@ function addEnvRow(k='',v='') {
 document.getElementById('btn-add-env').addEventListener('click', ()=>addEnvRow());
 const collectEnv = ()=>[...document.querySelectorAll('#env-ed .env-row')]
   .map(r=>({k:r.querySelector('.ek').value.trim(),v:r.querySelector('.ev').value})).filter(e=>e.k);
+
+// ─── Dependencies selector ────────────────────────────────────────────────────
+function populateDependencies(currentScriptId) {
+  const sel = document.getElementById('f-dependencies');
+  sel.innerHTML = '';
+  scripts.filter(s => s.id !== currentScriptId).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.name;
+    sel.appendChild(opt);
+  });
+}
+
+function collectDependencies() {
+  const sel = document.getElementById('f-dependencies');
+  return Array.from(sel.selectedOptions).map(opt => opt.value);
+}
+
+// ─── Output patterns editor ───────────────────────────────────────────────────
+function renderOutputPatterns(patterns) {
+  const list = document.getElementById('output-patterns-list');
+  list.innerHTML = '';
+  patterns.forEach(p => addOutputPatternRow(p.name, p.regex, p.action));
+}
+
+function addOutputPatternRow(name='', regex='', action='alert') {
+  const list = document.getElementById('output-patterns-list');
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;';
+  row.innerHTML = `
+    <input type="text" placeholder="Pattern name" value="${esc(name)}" class="pattern-name" style="flex:1;"/>
+    <input type="text" placeholder="Regex (e.g., error|fatal)" value="${esc(regex)}" class="pattern-regex" style="flex:2;"/>
+    <select class="pattern-action" style="flex:1;">
+      <option value="alert" ${action==='alert'?'selected':''}>Alert Only</option>
+      <option value="notify" ${action==='notify'?'selected':''}>Notify</option>
+      <option value="restart" ${action==='restart'?'selected':''}>Restart</option>
+      <option value="stop" ${action==='stop'?'selected':''}>Stop</option>
+    </select>
+    <button class="xbtn" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  `;
+  list.appendChild(row);
+}
+
+document.getElementById('btn-add-pattern').addEventListener('click', () => addOutputPatternRow());
+
+function collectOutputPatterns() {
+  return [...document.querySelectorAll('#output-patterns-list > div')].map(row => ({
+    name: row.querySelector('.pattern-name').value.trim(),
+    regex: row.querySelector('.pattern-regex').value.trim(),
+    action: row.querySelector('.pattern-action').value,
+  })).filter(p => p.name && p.regex);
+}
+
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const iPlay    = ()=>`<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
@@ -1158,7 +2060,7 @@ function renderTable() {
       <td>${statChip(s.id,'cpu')}</td>
       <td>${statChip(s.id,'mem')}</td>
       <td>${crashBadge(s.crashCount||0)}</td>
-      <td>${s.cronEnabled?`<span class="cron-tag">${esc(s.cronSchedule||'—')}</span>`:'<span style="color:var(--muted2);font-size:12px;">—</span>'}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">${triggerTags(s) || '<span style="color:var(--muted2);font-size:12px;">—</span>'}</td>
       <td>
         <div class="act-cell">
           ${s.status==='running'
@@ -1168,11 +2070,98 @@ function renderTable() {
           ${s.gitEnabled ? `<button class="ibtn git" title="Git Pull & Restart" onclick="doGitPullRestart('${s.id}')">${iGit()}</button>` : ''}
           <button class="ibtn con" title="Open Console" onclick="openConsole('${s.id}')">${iCon()}</button>
           <button class="ibtn"     title="Logs"         onclick="openLogs('${s.id}')">${iLog()}</button>
+          <button class="ibtn"     title="Profiles / Environments" onclick="openProfileSwitcher('${s.id}',this)" style="font-size:14px;">🔄</button>
           <button class="ibtn"     title="Edit"         onclick="openEdit('${s.id}')">${iEdit()}</button>
           <button class="ibtn del" title="Remove"       onclick="doDelete('${s.id}')">${iTrash()}</button>
         </div>
       </td>
     </tr>`).join('');
+}
+
+// ─── Profile Switcher Popover ─────────────────────────────────────────────────
+let activeSwitcherEl = null;
+
+function closeProfileSwitcher() {
+  const old = document.getElementById('profile-switcher-pop');
+  if (old) old.remove();
+  activeSwitcherEl = null;
+}
+
+async function openProfileSwitcher(scriptId, btn) {
+  // Toggle: close if already open for this button
+  if (activeSwitcherEl === btn) { closeProfileSwitcher(); return; }
+  closeProfileSwitcher();
+  activeSwitcherEl = btn;
+
+  const profs = await window.api.getProfiles(scriptId) || {};
+  const names = Object.keys(profs);
+  const script = scripts.find(s => s.id === scriptId);
+
+  const pop = document.createElement('div');
+  pop.id = 'profile-switcher-pop';
+  pop.style.cssText = `
+    position:fixed;z-index:9999;background:var(--panel);border:1px solid var(--border2);
+    border-radius:10px;padding:10px 0;min-width:180px;box-shadow:0 16px 48px rgba(0,0,0,.6);
+    font-size:13px;
+  `;
+  const rect = btn.getBoundingClientRect();
+  pop.style.top  = (rect.bottom + 6) + 'px';
+  pop.style.left = Math.max(8, rect.right - 180) + 'px';
+
+  if (!names.length) {
+    pop.innerHTML = `<div style="padding:8px 14px;color:var(--muted);font-size:12px;">No profiles yet.<br>Open Edit to create one.</div>`;
+  } else {
+    const active = script?.activeProfile || null;
+    pop.innerHTML = `
+      <div style="padding:4px 14px 6px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted2);text-transform:uppercase;">Switch Profile</div>
+      ${names.map(n => `
+        <div onclick="switchProfileFromPop('${scriptId}','${n.replace(/'/g,"\\'")}',this)"
+          style="padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;
+          ${n===active?'color:var(--accent);background:rgba(74,240,160,.1);':''}"
+          onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='${n===active?'rgba(74,240,160,.1)':''}'"
+        >
+          <span style="font-size:10px;${n===active?'':'opacity:0;'}">✓</span>
+          ${esc(n)}
+        </div>`).join('')}
+      <div style="border-top:1px solid var(--border2);margin-top:4px;padding:6px 14px 2px;">
+        <span style="color:var(--muted);font-size:11px;cursor:pointer;" onclick="closeProfileSwitcher();openEdit('${scriptId}')">⚙ Manage profiles…</span>
+      </div>`;
+  }
+
+  document.body.appendChild(pop);
+  setTimeout(() => document.addEventListener('click', outsideSwitcherHandler, {once:true}), 0);
+}
+
+async function switchProfileFromPop(scriptId, profileName, el) {
+  await window.api.applyProfile(scriptId, profileName);
+  const idx = scripts.findIndex(s => s.id === scriptId);
+  if (idx !== -1) scripts[idx].activeProfile = profileName;
+  closeProfileSwitcher();
+  renderAll();
+  // Brief toast feedback
+  showToast(`Profile "${profileName}" applied`);
+}
+
+function outsideSwitcherHandler(e) {
+  const pop = document.getElementById('profile-switcher-pop');
+  if (pop && !pop.contains(e.target)) closeProfileSwitcher();
+}
+
+function showToast(msg) {
+  let t = document.getElementById('profile-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'profile-toast';
+    t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:var(--accent);color:#000;font-weight:600;font-size:13px;
+      padding:8px 18px;border-radius:8px;z-index:99999;pointer-events:none;
+      opacity:0;transition:opacity .2s;`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.opacity = '0'; }, 2000);
 }
 
 // ─── Log Export ───────────────────────────────────────────────────────────────
@@ -1199,6 +2188,239 @@ document.getElementById('btn-log-export').addEventListener('click', async () => 
     alert('Export failed: ' + r.error);
   }
 });
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+let anCpuChart = null, anMemChart = null, anUptimeChart = null;
+
+const AN_CHART_DEFAULTS = {
+  responsive: true, maintainAspectRatio: false,
+  animation: { duration: 400 },
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false,
+    backgroundColor: '#191c25', borderColor: '#2e3545', borderWidth: 1,
+    titleColor: '#c8d0e0', bodyColor: '#5a6480', padding: 8 }},
+  scales: {
+    x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#5a6480', maxTicksLimit: 8, font: { size: 10 } } },
+    y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#5a6480', font: { size: 10 } }, beginAtZero: true }
+  }
+};
+
+function anFmtTime(ts, range) {
+  const d = new Date(ts);
+  if (range === '7d') return d.toLocaleDateString([], { month:'short', day:'numeric' });
+  if (range === '24h' || range === '6h') return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+function destroyChart(c) { if (c) { try { c.destroy(); } catch(e){} } return null; }
+
+async function renderAnalytics() {
+  const scriptId = document.getElementById('an-script-sel').value;
+  const range    = document.getElementById('an-range-sel').value;
+
+  // --- gather data ---
+  let history = [];
+  let targetScripts = scriptId ? scripts.filter(s => s.id === scriptId) : scripts;
+
+  if (scriptId) {
+    history = await window.api.getStatsHistory(scriptId, range);
+  } else {
+    // Merge all scripts' history for aggregate view
+    const allData = await Promise.all(scripts.map(s => window.api.getStatsHistory(s.id, range).then(d => d.map(p => ({...p, scriptId: s.id})))));
+    history = allData.flat().sort((a,b) => a.timestamp - b.timestamp);
+  }
+
+  // --- Summary cards ---
+  const avgCpu  = history.length ? (history.reduce((a,p) => a + (p.cpu||0), 0) / history.length).toFixed(1) : '—';
+  const avgMem  = history.length ? Math.round(history.reduce((a,p) => a + (p.mem||0), 0) / history.length) : '—';
+  const peakCpu = history.length ? Math.max(...history.map(p => p.cpu||0)).toFixed(1) : '—';
+  const peakMem = history.length ? Math.max(...history.map(p => p.mem||0)) : '—';
+  const totalCrashes = targetScripts.reduce((a, s) => a + (s.crashCount || 0), 0);
+  const runningCount = targetScripts.filter(s => s.status === 'running').length;
+  const uptimePct = targetScripts.length ? Math.round((runningCount / targetScripts.length) * 100) : 0;
+
+  document.getElementById('an-stat-row').innerHTML = `
+    <div class="an-sc"><div class="lbl">Avg CPU</div><div class="val" style="color:var(--accent);">${avgCpu}${avgCpu !== '—' ? '%' : ''}</div><div class="sub">over selected range</div></div>
+    <div class="an-sc"><div class="lbl">Peak CPU</div><div class="val" style="color:var(--warn);">${peakCpu}${peakCpu !== '—' ? '%' : ''}</div><div class="sub">highest observed</div></div>
+    <div class="an-sc"><div class="lbl">Avg RAM</div><div class="val" style="color:var(--python);">${avgMem !== '—' ? avgMem + ' MB' : '—'}</div><div class="sub">over selected range</div></div>
+    <div class="an-sc"><div class="lbl">Peak RAM</div><div class="val" style="color:var(--purple);">${peakMem !== '—' ? peakMem + ' MB' : '—'}</div><div class="sub">highest observed</div></div>
+    <div class="an-sc"><div class="lbl">Total Crashes</div><div class="val" style="color:var(--danger);">${totalCrashes}</div><div class="sub">all time</div></div>
+    <div class="an-sc"><div class="lbl">Now Running</div><div class="val" style="color:var(--accent);">${runningCount}/${targetScripts.length}</div><div class="sub">${uptimePct}% uptime</div></div>
+  `;
+
+  // --- CPU chart ---
+  anCpuChart = destroyChart(anCpuChart);
+  document.getElementById('an-cpu-avg').textContent = avgCpu !== '—' ? `avg ${avgCpu}%` : '';
+  const cpuCtx = document.getElementById('an-cpu-chart').getContext('2d');
+  if (history.length < 2) {
+    renderAnEmpty('an-cpu-chart', 'Not enough data yet — charts fill as the app runs.');
+  } else {
+    // Downsample for performance
+    const pts = downsample(history, 120);
+    anCpuChart = new Chart(cpuCtx, {
+      type: 'line',
+      data: {
+        labels: pts.map(p => anFmtTime(p.timestamp, range)),
+        datasets: [{
+          data: pts.map(p => p.cpu),
+          borderColor: '#4af0a0', backgroundColor: 'rgba(74,240,160,.08)',
+          fill: true, tension: 0.3, pointRadius: 0, borderWidth: 1.5
+        }]
+      },
+      options: { ...AN_CHART_DEFAULTS, scales: { ...AN_CHART_DEFAULTS.scales, y: { ...AN_CHART_DEFAULTS.scales.y, max: 100, ticks: { ...AN_CHART_DEFAULTS.scales.y.ticks, callback: v => v + '%' } } } }
+    });
+  }
+
+  // --- RAM chart ---
+  anMemChart = destroyChart(anMemChart);
+  document.getElementById('an-mem-avg').textContent = avgMem !== '—' ? `avg ${avgMem} MB` : '';
+  const memCtx = document.getElementById('an-mem-chart').getContext('2d');
+  if (history.length < 2) {
+    renderAnEmpty('an-mem-chart', '');
+  } else {
+    const pts = downsample(history, 120);
+    anMemChart = new Chart(memCtx, {
+      type: 'line',
+      data: {
+        labels: pts.map(p => anFmtTime(p.timestamp, range)),
+        datasets: [{
+          data: pts.map(p => p.mem),
+          borderColor: '#3b9de0', backgroundColor: 'rgba(59,157,224,.08)',
+          fill: true, tension: 0.3, pointRadius: 0, borderWidth: 1.5
+        }]
+      },
+      options: { ...AN_CHART_DEFAULTS, scales: { ...AN_CHART_DEFAULTS.scales, y: { ...AN_CHART_DEFAULTS.scales.y, ticks: { ...AN_CHART_DEFAULTS.scales.y.ticks, callback: v => v + ' MB' } } } }
+    });
+  }
+
+  // --- Crash trends bar ---
+  const crashEl = document.getElementById('an-crash-content');
+  const sorted = [...targetScripts].sort((a, b) => (b.crashCount||0) - (a.crashCount||0)).filter(s => (s.crashCount||0) > 0);
+  if (!sorted.length) {
+    crashEl.innerHTML = `<div class="an-empty"><span style="font-size:24px;">🎉</span><span>No crashes recorded!</span></div>`;
+  } else {
+    const maxCrash = sorted[0].crashCount;
+    crashEl.innerHTML = `<div class="an-crash-bar">${sorted.slice(0,8).map(s => `
+      <div class="an-crash-row">
+        <span class="an-crash-name" title="${esc(s.name)}">${esc(s.name)}</span>
+        <div style="flex:1;background:var(--panel);border-radius:4px;height:8px;overflow:hidden;">
+          <div class="an-crash-bar-fill" style="width:${Math.round((s.crashCount/maxCrash)*100)}%;opacity:${0.4 + 0.6*(s.crashCount/maxCrash)};"></div>
+        </div>
+        <span class="an-crash-count">${s.crashCount}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  // --- Uptime % horizontal bar chart ---
+  anUptimeChart = destroyChart(anUptimeChart);
+  const uptCtx = document.getElementById('an-uptime-chart').getContext('2d');
+  if (!targetScripts.length) {
+    renderAnEmpty('an-uptime-chart', 'No scripts registered.');
+  } else {
+    const uptimeData = targetScripts.map(s => {
+      const sh = statsCache[s.id];
+      if (!sh) return { name: s.name, pct: s.status === 'running' ? 100 : 0 };
+      // Rough uptime %: uptime / elapsed since first stat in range
+      const elapsed = Date.now() - (history.find(p => p.scriptId === s.id || !scriptId)?.timestamp || Date.now());
+      const pct = elapsed > 0 ? Math.min(100, Math.round((sh.uptime / Math.max(elapsed, sh.uptime)) * 100)) : (s.status === 'running' ? 100 : 0);
+      return { name: s.name, pct };
+    });
+    anUptimeChart = new Chart(uptCtx, {
+      type: 'bar',
+      data: {
+        labels: uptimeData.map(u => u.name.length > 14 ? u.name.slice(0,13)+'…' : u.name),
+        datasets: [{
+          data: uptimeData.map(u => u.pct),
+          backgroundColor: uptimeData.map(u => u.pct >= 90 ? 'rgba(74,240,160,.7)' : u.pct >= 50 ? 'rgba(255,170,51,.7)' : 'rgba(255,68,102,.7)'),
+          borderRadius: 4, borderSkipped: false,
+        }]
+      },
+      options: { ...AN_CHART_DEFAULTS, indexAxis: 'y',
+        scales: { ...AN_CHART_DEFAULTS.scales,
+          x: { ...AN_CHART_DEFAULTS.scales.x, min: 0, max: 100, ticks: { ...AN_CHART_DEFAULTS.scales.x.ticks, callback: v => v + '%' } },
+          y: { ...AN_CHART_DEFAULTS.scales.y, ticks: { color: '#5a6480', font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // --- Cost estimator ---
+  renderCostEstimator(avgCpu, avgMem);
+}
+
+function renderAnEmpty(canvasId, msg) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Parent div shows message via sibling
+  const wrap = canvas.parentElement;
+  let em = wrap.querySelector('.an-empty-msg');
+  if (!em) { em = document.createElement('div'); em.className = 'an-empty-msg'; em.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;pointer-events:none;'; wrap.style.position='relative'; wrap.appendChild(em); }
+  em.textContent = msg || 'Not enough data yet.';
+  canvas.style.opacity = '0';
+}
+
+function downsample(arr, maxPts) {
+  if (arr.length <= maxPts) return arr;
+  const step = arr.length / maxPts;
+  return Array.from({ length: maxPts }, (_, i) => arr[Math.floor(i * step)]);
+}
+
+function renderCostEstimator(avgCpu, avgMem) {
+  const rate  = parseFloat(document.getElementById('an-cost-rate').value) || 0.048;
+  const cores = parseInt(document.getElementById('an-cost-cores').value) || 4;
+  const ramMB = parseInt(document.getElementById('an-cost-ram').value) || 8192;
+
+  const hoursPerMonth = 730;
+  const fullCost = rate * hoursPerMonth;
+
+  const cpuFraction = avgCpu !== '—' ? (parseFloat(avgCpu) / 100) : null;
+  const memFraction = avgMem !== '—' ? (parseInt(avgMem) / ramMB) : null;
+
+  const avgFraction = (cpuFraction !== null && memFraction !== null)
+    ? (cpuFraction * 0.6 + memFraction * 0.4)
+    : (cpuFraction ?? memFraction ?? 0.1);
+
+  const estCost = (fullCost * avgFraction).toFixed(2);
+
+  document.getElementById('an-cost-results').innerHTML = `
+    <div class="an-cost-result">
+      <div class="lbl">Full VM (monthly)</div>
+      <div class="val" style="color:var(--muted);">$${fullCost.toFixed(2)}</div>
+      <div style="font-size:11px;color:var(--muted);">@ $${rate}/hr × ${hoursPerMonth}h</div>
+    </div>
+    <div class="an-cost-result">
+      <div class="lbl">Your Scripts Est. Cost</div>
+      <div class="val">$${estCost}<span style="font-size:13px;color:var(--muted);">/mo</span></div>
+      <div style="font-size:11px;color:var(--muted);">~${Math.round(avgFraction*100)}% of VM resources used</div>
+    </div>
+    <div class="an-cost-result" style="background:rgba(59,157,224,.06);border-color:rgba(59,157,224,.2);">
+      <div class="lbl">Wasted Resources</div>
+      <div class="val" style="color:var(--python);">$${(fullCost - parseFloat(estCost)).toFixed(2)}<span style="font-size:13px;color:var(--muted);">/mo</span></div>
+      <div style="font-size:11px;color:var(--muted);">${Math.round((1-avgFraction)*100)}% idle — consider downsizing</div>
+    </div>
+  `;
+}
+
+// Populate analytics script selector
+function refreshAnScriptSel() {
+  const sel = document.getElementById('an-script-sel');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Scripts</option>' + scripts.map(s => `<option value="${s.id}"${s.id===cur?' selected':''}>${esc(s.name)}</option>`).join('');
+}
+
+// Wire up controls
+document.getElementById('an-script-sel').addEventListener('change', renderAnalytics);
+document.getElementById('an-range-sel').addEventListener('change', renderAnalytics);
+document.getElementById('an-refresh-btn').addEventListener('click', renderAnalytics);
+['an-cost-rate','an-cost-cores','an-cost-ram'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const avg = document.getElementById('an-stat-row').querySelector('.val')?.textContent?.replace('%','').trim();
+    renderCostEstimator(avg || '—', '—');
+  });
+});
+
+// (nav click handlers are registered above, near the Nav section)
 
 // ─── Keyboard Shortcuts ───────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
@@ -1307,6 +2529,818 @@ async function loadConfigPaths() {
   const bd = document.getElementById('cfg-backup-dir');
   if (df) df.textContent = configPaths.dataFile  || '—';
   if (bd) bd.textContent = configPaths.backupDir || '—';
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICATION CHANNELS
+// ══════════════════════════════════════════════════════════════════
+
+function ncStatus(id, msg, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok === true ? 'var(--accent)' : ok === false ? '#ff6b6b' : 'var(--muted)';
+  if (ok !== null) setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+// ── SMTP ──────────────────────────────────────────────────────────
+function smtpToggle(on) {
+  document.getElementById('smtp-fields').style.display = on ? 'flex' : 'none';
+}
+async function loadSmtpSettings() {
+  try {
+    const s = await window.api.getSmtpSettings();
+    document.getElementById('smtp-enabled').checked = !!s.enabled;
+    document.getElementById('smtp-fields').style.display = s.enabled ? 'flex' : 'none';
+    document.getElementById('smtp-host').value = s.host || '';
+    document.getElementById('smtp-port').value = s.port || 587;
+    document.getElementById('smtp-user').value = s.user || '';
+    document.getElementById('smtp-pass').value = s.pass || '';
+    document.getElementById('smtp-alert-email').value = s.alertEmail || '';
+    document.getElementById('smtp-secure').checked = !!s.secure;
+  } catch(e) {}
+}
+async function saveSmtpSettings() {
+  const config = {
+    enabled: document.getElementById('smtp-enabled').checked,
+    host: document.getElementById('smtp-host').value.trim(),
+    port: parseInt(document.getElementById('smtp-port').value) || 587,
+    user: document.getElementById('smtp-user').value.trim(),
+    pass: document.getElementById('smtp-pass').value,
+    alertEmail: document.getElementById('smtp-alert-email').value.trim(),
+    secure: document.getElementById('smtp-secure').checked
+  };
+  const r = await window.api.saveSmtpSettings(config);
+  ncStatus('smtp-status', r.ok ? '✅ Saved' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+async function testSmtp() {
+  ncStatus('smtp-status', '⏳ Sending…', null);
+  const r = await window.api.testEmail();
+  ncStatus('smtp-status', r.ok ? '✅ Email sent!' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+
+// ── Discord ───────────────────────────────────────────────────────
+function discordToggle(on) {
+  document.getElementById('discord-fields').style.display = on ? 'flex' : 'none';
+}
+async function loadDiscordSettings() {
+  try {
+    const s = await window.api.getDiscordSettings();
+    document.getElementById('discord-enabled').checked = !!s.enabled;
+    document.getElementById('discord-fields').style.display = s.enabled ? 'flex' : 'none';
+    document.getElementById('discord-url').value = s.webhookUrl || '';
+  } catch(e) {}
+}
+async function saveDiscordSettings() {
+  const config = {
+    enabled: document.getElementById('discord-enabled').checked,
+    webhookUrl: document.getElementById('discord-url').value.trim()
+  };
+  const r = await window.api.saveDiscordSettings(config);
+  ncStatus('discord-status', r.ok ? '✅ Saved' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+async function testDiscord() {
+  ncStatus('discord-status', '⏳ Sending…', null);
+  const r = await window.api.testDiscord();
+  ncStatus('discord-status', r.ok ? '✅ Sent!' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+
+// ── Slack ─────────────────────────────────────────────────────────
+function slackToggle(on) {
+  document.getElementById('slack-fields').style.display = on ? 'flex' : 'none';
+}
+async function loadSlackSettings() {
+  try {
+    const s = await window.api.getSlackSettings();
+    document.getElementById('slack-enabled').checked = !!s.enabled;
+    document.getElementById('slack-fields').style.display = s.enabled ? 'flex' : 'none';
+    document.getElementById('slack-url').value = s.webhookUrl || '';
+  } catch(e) {}
+}
+async function saveSlackSettings() {
+  const config = {
+    enabled: document.getElementById('slack-enabled').checked,
+    webhookUrl: document.getElementById('slack-url').value.trim()
+  };
+  const r = await window.api.saveSlackSettings(config);
+  ncStatus('slack-status', r.ok ? '✅ Saved' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+async function testSlack() {
+  ncStatus('slack-status', '⏳ Sending…', null);
+  const r = await window.api.testSlack();
+  ncStatus('slack-status', r.ok ? '✅ Sent!' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+
+// ── Custom Webhook ────────────────────────────────────────────────
+function cwhToggle(on) {
+  document.getElementById('cwh-fields').style.display = on ? 'flex' : 'none';
+}
+async function loadCwhSettings() {
+  try {
+    const s = await window.api.getCustomWebhookSettings();
+    document.getElementById('cwh-enabled').checked = !!s.enabled;
+    document.getElementById('cwh-fields').style.display = s.enabled ? 'flex' : 'none';
+    document.getElementById('cwh-url').value = s.url || '';
+    document.getElementById('cwh-method').value = s.method || 'POST';
+    document.getElementById('cwh-secret').value = s.secret || '';
+  } catch(e) {}
+}
+async function saveCwhSettings() {
+  const config = {
+    enabled: document.getElementById('cwh-enabled').checked,
+    url: document.getElementById('cwh-url').value.trim(),
+    method: document.getElementById('cwh-method').value,
+    secret: document.getElementById('cwh-secret').value.trim()
+  };
+  const r = await window.api.saveCustomWebhookSettings(config);
+  ncStatus('cwh-status', r.ok ? '✅ Saved' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+async function testCwh() {
+  ncStatus('cwh-status', '⏳ Sending…', null);
+  const r = await window.api.testCustomWebhook();
+  ncStatus('cwh-status', r.ok ? '✅ Sent!' : '❌ ' + (r.error || 'Failed'), r.ok);
+}
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// COLLECTIONS
+// ══════════════════════════════════════════════════════════════════
+
+let colData = [];          // loaded collections
+let colEditId = null;      // null = creating, string = editing
+let colDragSrc = null;     // drag-reorder source index
+
+// ── Load & Render ─────────────────────────────────────────────────
+async function colLoad() {
+  try {
+    colData = await window.api.getCollections();
+  } catch(e) { colData = []; }
+  colRender();
+}
+
+function colScriptName(id) {
+  const s = (window._scripts || scripts || []).find(s => s.id === id);
+  return s ? s.name : `(unknown ${id})`;
+}
+
+function colScriptStatus(id) {
+  const s = (window._scripts || scripts || []).find(s => s.id === id);
+  if (!s) return '';
+  return s.status === 'running'
+    ? '<span style="color:#4af0a0;font-size:10px;">● running</span>'
+    : '<span style="color:var(--muted);font-size:10px;">○ stopped</span>';
+}
+
+function colAllRunning(col) {
+  return col.scripts.length > 0 && col.scripts.every(id => {
+    const s = (window._scripts || scripts || []).find(s => s.id === id);
+    return s && s.status === 'running';
+  });
+}
+
+// ── Collection card drag-to-reorder ──────────────────────────────────────────────
+let colDragCardSrc = null;
+
+function colCardDragStart(e, id) {
+  colDragCardSrc = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.45';
+}
+function colCardDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+  document.querySelectorAll('.col-card').forEach(el => el.classList.remove('col-drag-over'));
+}
+function colCardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.col-card').forEach(el => el.classList.remove('col-drag-over'));
+  e.currentTarget.classList.add('col-drag-over');
+}
+function colCardDragLeave(e) {
+  e.currentTarget.classList.remove('col-drag-over');
+}
+async function colCardDrop(e, id) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('col-drag-over');
+  if (!colDragCardSrc || colDragCardSrc === id) return;
+  const srcIdx  = colData.findIndex(c => c.id === colDragCardSrc);
+  const destIdx = colData.findIndex(c => c.id === id);
+  if (srcIdx === -1 || destIdx === -1) return;
+  const moved = colData.splice(srcIdx, 1)[0];
+  colData.splice(destIdx, 0, moved);
+  colRender();
+  await window.api.reorderCollections(colData.map(c => c.id));
+  colDragCardSrc = null;
+}
+
+function colRender() {
+  const list = document.getElementById('col-list');
+  const empty = document.getElementById('col-empty');
+  if (!list) return;
+  if (!colData.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  list.innerHTML = colData.map(col => {
+    const allRunning = colAllRunning(col);
+    const runCount = col.scripts.filter(id => {
+      const s = (window._scripts || scripts || []).find(s => s.id === id);
+      return s && s.status === 'running';
+    }).length;
+    return `
+    <div class="scard col-card" draggable="true"
+      style="border-left:3px solid ${col.color || '#4af0a0'};margin:0;transition:opacity .15s,box-shadow .15s,transform .1s;"
+      ondragstart="colCardDragStart(event,'${col.id}')"
+      ondragend="colCardDragEnd(event)"
+      ondragover="colCardDragOver(event)"
+      ondragleave="colCardDragLeave(event)"
+      ondrop="colCardDrop(event,'${col.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:18px;line-height:1;padding:0 2px;user-select:none;letter-spacing:-1px;">⋮⋮</div>
+          <div style="width:10px;height:10px;border-radius:50%;background:${col.color || '#4af0a0'};flex-shrink:0;"></div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${col.name}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+              ${col.scripts.length} script${col.scripts.length !== 1 ? 's' : ''} · 
+              ${col.startOrder === 'sequential' ? '⏱ sequential' : '⚡ parallel'} · 
+              ${runCount}/${col.scripts.length} running
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="colEdit('${col.id}')">✏️ Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:#ff6b6b;" onclick="colDelete('${col.id}','${col.name.replace(/'/g,"\\'")}')">🗑</button>
+          ${allRunning
+            ? `<button class="btn btn-sm" style="background:#ff6b6b22;color:#ff6b6b;border:1px solid #ff6b6b44;" onclick="colStop('${col.id}')">⏹ Stop All</button>`
+            : `<button class="btn btn-accent btn-sm" onclick="colStart('${col.id}')">▶ Start All</button>`
+          }
+        </div>
+      </div>
+      ${col.scripts.length ? `
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:5px;">
+        ${col.scripts.map((id, i) => `
+          <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:6px 10px;">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--font-mono);min-width:16px;">${i + 1}.</span>
+            <span style="font-size:12px;color:var(--text);flex:1;">${colScriptName(id)}</span>
+            ${colScriptStatus(id)}
+          </div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Start / Stop ──────────────────────────────────────────────────
+async function colStart(id) {
+  const col = colData.find(c => c.id === id);
+  if (!col) return;
+  showToast(`▶ Starting "${col.name}"…`);
+  const r = await window.api.startCollection(id);
+  if (r.ok) {
+    showToast(`✅ "${col.name}" started!`);
+    setTimeout(() => { loadScripts().then(colRender); }, col.startOrder === 'sequential' ? col.scripts.length * 2200 : 800);
+  } else {
+    showToast('❌ ' + (r.error || 'Start failed'));
+  }
+}
+
+async function colStop(id) {
+  const col = colData.find(c => c.id === id);
+  if (!col) return;
+  const r = await window.api.stopCollection(id);
+  if (r.ok) {
+    showToast(`⏹ "${col.name}" stopped`);
+    setTimeout(() => { loadScripts().then(colRender); }, 600);
+  } else {
+    showToast('❌ ' + (r.error || 'Stop failed'));
+  }
+}
+
+// ── Create / Edit panel ───────────────────────────────────────────
+function colShowCreate() {
+  colEditId = null;
+  document.getElementById('col-edit-title').textContent = '＋ New Collection';
+  document.getElementById('col-name').value = '';
+  document.getElementById('col-color').value = '#4af0a0';
+  document.getElementById('col-order').value = 'sequential';
+  document.getElementById('col-edit-status').textContent = '';
+  colBuildPicker([]);
+  const panel = document.getElementById('col-edit-panel');
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  document.getElementById('col-name').focus();
+}
+
+function colEdit(id) {
+  const col = colData.find(c => c.id === id);
+  if (!col) return;
+  colEditId = id;
+  document.getElementById('col-edit-title').textContent = '✏️ Edit Collection';
+  document.getElementById('col-name').value = col.name;
+  document.getElementById('col-color').value = col.color || '#4af0a0';
+  document.getElementById('col-order').value = col.startOrder || 'sequential';
+  document.getElementById('col-edit-status').textContent = '';
+  colBuildPicker(col.scripts || []);
+  const panel = document.getElementById('col-edit-panel');
+  panel.style.display = 'flex';
+  panel.style.flexDirection = 'column';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function colCancelEdit() {
+  document.getElementById('col-edit-panel').style.display = 'none';
+  colEditId = null;
+}
+
+// ── Script picker with drag-to-reorder ───────────────────────────
+function colBuildPicker(selected) {
+  const picker = document.getElementById('col-script-picker');
+  const allScripts = (window._scripts || scripts || []);
+
+  // Start with selected scripts in order, then unselected alphabetically
+  const selectedSet = new Set(selected);
+  const ordered = [
+    ...selected.filter(id => allScripts.find(s => s.id === id)),
+    ...allScripts.filter(s => !selectedSet.has(s.id)).map(s => s.id)
+  ];
+
+  picker.innerHTML = ordered.map(id => {
+    const s = allScripts.find(s => s.id === id);
+    if (!s) return '';
+    const checked = selectedSet.has(id);
+    return `<div class="col-pick-row" draggable="true" data-id="${id}"
+      style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:grab;user-select:none;background:${checked ? 'var(--panel)' : 'transparent'};border:1px solid ${checked ? 'var(--border)' : 'transparent'};"
+      ondragstart="colDragStart(event)" ondragover="colDragOver(event)" ondrop="colDrop(event)" ondragend="colDragEnd(event)">
+      <span style="color:var(--muted);font-size:12px;cursor:grab;">⠿</span>
+      <input type="checkbox" ${checked ? 'checked' : ''} onchange="colPickCheck(this,'${id}')" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer;flex-shrink:0;"/>
+      <span style="font-size:12px;color:var(--text);flex:1;">${s.name}</span>
+      <span style="font-size:10px;color:var(--muted);">${s.type || ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function colPickCheck(el, id) {
+  const row = el.closest('.col-pick-row');
+  row.style.background = el.checked ? 'var(--panel)' : 'transparent';
+  row.style.borderColor = el.checked ? 'var(--border)' : 'transparent';
+}
+
+function colGetPickedIds() {
+  return [...document.querySelectorAll('#col-script-picker .col-pick-row')]
+    .filter(row => row.querySelector('input[type=checkbox]')?.checked)
+    .map(row => row.dataset.id);
+}
+
+// Drag-to-reorder picker rows
+function colDragStart(e) {
+  colDragSrc = e.currentTarget;
+  e.dataTransfer.effectAllowed = 'move';
+  colDragSrc.style.opacity = '0.4';
+}
+function colDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const target = e.currentTarget;
+  if (target !== colDragSrc) target.style.borderColor = 'var(--accent)';
+}
+function colDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  if (target === colDragSrc) return;
+  target.style.borderColor = '';
+  const picker = document.getElementById('col-script-picker');
+  const rows = [...picker.children];
+  const srcIdx = rows.indexOf(colDragSrc);
+  const tgtIdx = rows.indexOf(target);
+  if (srcIdx < tgtIdx) picker.insertBefore(colDragSrc, target.nextSibling);
+  else picker.insertBefore(colDragSrc, target);
+}
+function colDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+  document.querySelectorAll('.col-pick-row').forEach(r => r.style.borderColor = '');
+}
+
+// ── Save ──────────────────────────────────────────────────────────
+async function colSave() {
+  const name = document.getElementById('col-name').value.trim();
+  if (!name) { document.getElementById('col-edit-status').textContent = '⚠ Name required'; return; }
+  const data = {
+    name,
+    color: document.getElementById('col-color').value,
+    startOrder: document.getElementById('col-order').value,
+    scripts: colGetPickedIds()
+  };
+  try {
+    if (colEditId) {
+      await window.api.updateCollection({ id: colEditId, ...data });
+    } else {
+      await window.api.addCollection(data);
+    }
+    colCancelEdit();
+    await colLoad();
+    showToast(colEditId ? `✅ "${name}" updated` : `✅ "${name}" created`);
+  } catch(e) {
+    document.getElementById('col-edit-status').textContent = '❌ ' + e.message;
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────────
+async function colDelete(id, name) {
+  if (!confirm(`Delete collection "${name}"? Scripts are not deleted.`)) return;
+  await window.api.deleteCollection(id);
+  await colLoad();
+  showToast(`🗑 "${name}" deleted`);
+}
+
+// ── Init (called when nav to Collections page) ────────────────────
+async function colInit() {
+  // Make sure scripts global is up to date so status dots work
+  try { await loadScripts(); } catch(e) {}
+  await colLoad();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MARKETPLACE
+// ══════════════════════════════════════════════════════════════════
+
+const MK_TEMPLATES = [
+  {
+    id: 'discord-bot-js',
+    name: 'Discord Bot (Node.js)',
+    author: 'ScriptManager',
+    description: 'A ready-to-run Discord.js v14 bot with slash command support, event handling, and auto-restart on crash.',
+    type: 'node',
+    tags: ['discord', 'bot', 'node'],
+    stars: 312,
+    script: {
+      name: 'Discord Bot',
+      type: 'discord-node',
+      runtime: 'node',
+      notes: 'Discord.js v14 bot. Run npm install first.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: false,
+      env: [{ key: 'DISCORD_TOKEN', value: 'your-token-here' }, { key: 'CLIENT_ID', value: 'your-client-id' }]
+    }
+  },
+  {
+    id: 'discord-bot-py',
+    name: 'Discord Bot (Python)',
+    author: 'ScriptManager',
+    description: 'A discord.py bot template with cog support, command prefix, and graceful shutdown handling.',
+    type: 'python',
+    tags: ['discord', 'bot', 'python'],
+    stars: 278,
+    script: {
+      name: 'Discord Bot (Python)',
+      type: 'discord-python',
+      runtime: 'python',
+      notes: 'discord.py bot. pip install discord.py first.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: false,
+      env: [{ key: 'DISCORD_TOKEN', value: 'your-token-here' }]
+    }
+  },
+  {
+    id: 'express-api',
+    name: 'Express REST API',
+    author: 'ScriptManager',
+    description: 'Node.js Express server with health check endpoint, CORS setup, and port monitoring for auto-restart.',
+    type: 'node',
+    tags: ['api', 'express', 'web', 'node'],
+    stars: 445,
+    script: {
+      name: 'Express API',
+      type: 'node',
+      runtime: 'node',
+      notes: 'Express REST API with /health endpoint.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: true,
+      healthCheckType: 'http',
+      healthCheckUrl: 'http://localhost:3000/health',
+      healthCheckInterval: 30,
+      env: [{ key: 'PORT', value: '3000' }, { key: 'NODE_ENV', value: 'production' }]
+    }
+  },
+  {
+    id: 'fastapi-server',
+    name: 'FastAPI Server',
+    author: 'ScriptManager',
+    description: 'Python FastAPI application with Uvicorn, auto-reload in dev mode, and health check integration.',
+    type: 'python',
+    tags: ['api', 'fastapi', 'web', 'python'],
+    stars: 389,
+    script: {
+      name: 'FastAPI Server',
+      type: 'python',
+      runtime: 'python',
+      notes: 'FastAPI with uvicorn. pip install fastapi uvicorn first.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: true,
+      healthCheckType: 'http',
+      healthCheckUrl: 'http://localhost:8000/health',
+      healthCheckInterval: 30,
+      env: [{ key: 'PORT', value: '8000' }, { key: 'ENV', value: 'production' }]
+    }
+  },
+  {
+    id: 'db-backup-cron',
+    name: 'Daily DB Backup',
+    author: 'ScriptManager',
+    description: 'PowerShell script that backs up a SQL Server or SQLite database daily at 2 AM with rotation.',
+    type: 'powershell',
+    tags: ['backup', 'database', 'cron', 'powershell'],
+    stars: 201,
+    script: {
+      name: 'Daily DB Backup',
+      type: 'powershell',
+      runtime: 'powershell',
+      notes: 'Runs daily at 2AM. Edit $DB_PATH and $BACKUP_DIR.',
+      autoRestart: false,
+      cronEnabled: true,
+      cronSchedule: '0 2 * * *',
+      healthCheckEnabled: false,
+      env: [{ key: 'DB_PATH', value: 'C:\\data\\mydb.sqlite' }, { key: 'BACKUP_DIR', value: 'C:\\backups' }]
+    }
+  },
+  {
+    id: 'telegram-bot-py',
+    name: 'Telegram Bot (Python)',
+    author: 'ScriptManager',
+    description: 'python-telegram-bot template with command handlers, callback queries, and persistent polling.',
+    type: 'python',
+    tags: ['telegram', 'bot', 'python'],
+    stars: 256,
+    script: {
+      name: 'Telegram Bot',
+      type: 'python',
+      runtime: 'python',
+      notes: 'pip install python-telegram-bot first.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: false,
+      env: [{ key: 'BOT_TOKEN', value: 'your-bot-token' }]
+    }
+  },
+  {
+    id: 'price-scraper',
+    name: 'Price Monitor / Scraper',
+    author: 'ScriptManager',
+    description: 'Python scraper using BeautifulSoup that checks prices on a schedule and logs drops.',
+    type: 'python',
+    tags: ['scraper', 'automation', 'python', 'cron'],
+    stars: 174,
+    script: {
+      name: 'Price Monitor',
+      type: 'python',
+      runtime: 'python',
+      notes: 'pip install requests beautifulsoup4 first.',
+      autoRestart: false,
+      cronEnabled: true,
+      cronSchedule: '*/30 * * * *',
+      healthCheckEnabled: false,
+      env: [{ key: 'TARGET_URL', value: 'https://example.com/product' }, { key: 'PRICE_THRESHOLD', value: '50' }]
+    }
+  },
+  {
+    id: 'file-sync-bat',
+    name: 'File Sync / Watcher',
+    author: 'ScriptManager',
+    description: 'Batch script that mirrors a source folder to a destination on a schedule — simple robocopy wrapper.',
+    type: 'batch',
+    tags: ['sync', 'files', 'backup', 'batch'],
+    stars: 133,
+    script: {
+      name: 'File Sync',
+      type: 'batch',
+      runtime: 'batch',
+      notes: 'Uses robocopy. Edit SRC and DEST env vars.',
+      autoRestart: false,
+      cronEnabled: true,
+      cronSchedule: '0 * * * *',
+      healthCheckEnabled: false,
+      env: [{ key: 'SRC', value: 'C:\\source' }, { key: 'DEST', value: 'D:\\backup' }]
+    }
+  },
+  {
+    id: 'nextjs-dev',
+    name: 'Next.js Dev Server',
+    author: 'ScriptManager',
+    description: 'Runs Next.js in dev mode with hot reload and exposes the port health check for auto-restart.',
+    type: 'node',
+    tags: ['nextjs', 'react', 'web', 'node', 'dev'],
+    stars: 367,
+    script: {
+      name: 'Next.js Dev',
+      type: 'node',
+      runtime: 'node',
+      notes: 'npm install then point path to your package.json dir.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: true,
+      healthCheckType: 'http',
+      healthCheckUrl: 'http://localhost:3000',
+      healthCheckInterval: 60,
+      env: [{ key: 'PORT', value: '3000' }, { key: 'NODE_ENV', value: 'development' }]
+    }
+  },
+  {
+    id: 'log-cleaner-ps',
+    name: 'Log Cleaner',
+    author: 'ScriptManager',
+    description: 'PowerShell script that deletes log files older than N days from a folder. Runs weekly via cron.',
+    type: 'powershell',
+    tags: ['cleanup', 'logs', 'powershell', 'cron'],
+    stars: 98,
+    script: {
+      name: 'Log Cleaner',
+      type: 'powershell',
+      runtime: 'powershell',
+      notes: 'Cleans logs older than DAYS_TO_KEEP days.',
+      autoRestart: false,
+      cronEnabled: true,
+      cronSchedule: '0 3 * * 0',
+      healthCheckEnabled: false,
+      env: [{ key: 'LOG_DIR', value: 'C:\\logs' }, { key: 'DAYS_TO_KEEP', value: '30' }]
+    }
+  }
+];
+
+let mkFilteredTemplates = [...MK_TEMPLATES];
+
+function mkTypeLabel(type) {
+  return { node:'Node.js', python:'Python', batch:'Batch', powershell:'PowerShell' }[type] || type;
+}
+function mkTypeColor(type) {
+  return { node:'#68d391', python:'#f6e05e', batch:'#fc8181', powershell:'#76e4f7' }[type] || 'var(--muted)';
+}
+
+function mkRenderGrid(templates) {
+  const grid = document.getElementById('mk-grid');
+  const empty = document.getElementById('mk-empty');
+  if (!templates.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = templates.map(t => `
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.3;">${t.name}</div>
+        <span style="font-size:10px;font-weight:700;color:${mkTypeColor(t.type)};background:${mkTypeColor(t.type)}22;padding:3px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;">${mkTypeLabel(t.type)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;flex:1;">${t.description}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${t.tags.map(tag => `<span style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:2px 6px;border-radius:3px;">#${tag}</span>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+        <span style="font-size:11px;color:var(--muted);">⭐ ${t.stars} · by ${t.author}</span>
+        <button class="btn btn-accent btn-sm" onclick="mkInstallTemplate('${t.id}')">⚡ Install</button>
+      </div>
+    </div>`).join('');
+}
+
+function mkFilterTemplates() {
+  const q = (document.getElementById('mk-search')?.value || '').toLowerCase();
+  const type = document.getElementById('mk-filter-type')?.value || '';
+  mkFilteredTemplates = MK_TEMPLATES.filter(t =>
+    (!type || t.type === type) &&
+    (!q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.tags.some(tg => tg.includes(q)))
+  );
+  mkRenderGrid(mkFilteredTemplates);
+}
+
+function mkRefresh() {
+  mkFilterTemplates();
+  const btn = event.target;
+  btn.textContent = '✅ Done';
+  setTimeout(() => { btn.textContent = '🔄 Refresh'; }, 1200);
+}
+
+function mkShowImport() {
+  const panel = document.getElementById('mk-import-panel');
+  panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  if (panel.style.display === 'flex') {
+    panel.style.flexDirection = 'column';
+    document.getElementById('mk-import-url')?.focus();
+  }
+}
+
+function mkNormalizeUrl(url) {
+  // Convert GitHub blob URLs to raw
+  return url
+    .replace('https://github.com/', 'https://raw.githubusercontent.com/')
+    .replace('/blob/', '/');
+}
+
+async function mkImportFromUrl() {
+  const rawUrl = document.getElementById('mk-import-url').value.trim();
+  if (!rawUrl) return;
+  const url = mkNormalizeUrl(rawUrl);
+  const status = document.getElementById('mk-import-status');
+  status.style.color = 'var(--muted)';
+  status.textContent = '⏳ Fetching…';
+  try {
+    const r = await window.api.importFromUrl(url);
+    if (r.ok) {
+      status.style.color = 'var(--accent)';
+      status.textContent = `✅ "${r.script.name}" imported!`;
+      document.getElementById('mk-import-url').value = '';
+      setTimeout(() => { status.textContent = ''; }, 4000);
+      await loadScripts(); // refresh scripts list
+    } else {
+      status.style.color = '#ff6b6b';
+      status.textContent = '❌ ' + (r.error || 'Import failed');
+    }
+  } catch(e) {
+    status.style.color = '#ff6b6b';
+    status.textContent = '❌ ' + e.message;
+  }
+}
+
+async function mkInstallTemplate(id) {
+  const tpl = MK_TEMPLATES.find(t => t.id === id);
+  if (!tpl) return;
+  const script = {
+    ...tpl.script,
+    id: Date.now().toString(),
+    status: 'stopped',
+    pid: null,
+    crashCount: 0,
+    path: ''
+  };
+  try {
+    const r = await window.api.addScript(script);
+    if (r && r.ok !== false) {
+      showToast(`✅ "${tpl.name}" installed! Set the script path to run it.`);
+      await loadScripts();
+    } else {
+      showToast('❌ Install failed: ' + (r?.error || 'Unknown error'));
+    }
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function mkPopulateShareSelect() {
+  const sel = document.getElementById('mk-share-select');
+  if (!sel) return;
+  try {
+    const data = await window.api.getScripts();
+    const list = Array.isArray(data) ? data : (data.scripts || []);
+    sel.innerHTML = '<option value="">— pick a script —</option>' +
+      list.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  } catch(e) {}
+}
+
+async function mkExportScript() {
+  const id = document.getElementById('mk-share-select').value;
+  if (!id) { document.getElementById('mk-share-status').textContent = 'Pick a script first'; return; }
+  const r = await window.api.exportScriptJson(id);
+  if (!r.ok) { document.getElementById('mk-share-status').textContent = '❌ ' + r.error; return; }
+  document.getElementById('mk-export-json').value = r.json;
+  document.getElementById('mk-export-preview').style.display = 'block';
+  await navigator.clipboard.writeText(r.json).catch(() => {});
+  document.getElementById('mk-share-status').textContent = '✅ Copied!';
+  setTimeout(() => { document.getElementById('mk-share-status').textContent = ''; }, 3000);
+}
+
+async function mkDownloadScript() {
+  const id = document.getElementById('mk-share-select').value;
+  if (!id) { document.getElementById('mk-share-status').textContent = 'Pick a script first'; return; }
+  const r = await window.api.exportScriptJson(id);
+  if (!r.ok) { document.getElementById('mk-share-status').textContent = '❌ ' + r.error; return; }
+  const blob = new Blob([r.json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const parsed = JSON.parse(r.json);
+  a.download = (parsed.name || 'script').replace(/[^a-z0-9-_]/gi, '_') + '.json';
+  a.click();
+  document.getElementById('mk-share-status').textContent = '✅ Downloaded!';
+  setTimeout(() => { document.getElementById('mk-share-status').textContent = ''; }, 3000);
+}
+
+function mkShowToast(msg) {
+  if (typeof showToast === 'function') { showToast(msg); return; }
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:9999;box-shadow:0 4px 20px #0006;';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function mkInit() {
+  mkRenderGrid(MK_TEMPLATES);
+  mkPopulateShareSelect();
+}
+
+// Load all notification settings when settings page is opened
+function loadNotificationSettings() {
+  loadSmtpSettings();
+  loadDiscordSettings();
+  loadSlackSettings();
+  loadCwhSettings();
 }
 
 async function openInExplorer(which) {

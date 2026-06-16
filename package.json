@@ -1,20 +1,21 @@
 {
   "name": "scriptmanager",
-  "version": "1.2.0",
+  "version": "1.5.0",
   "description": "Desktop manager for Node.js and Python scripts on Windows",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev":   "electron . --dev",
+    "dev": "electron . --dev",
     "build": "electron-builder --win --x64",
     "build:portable": "electron-builder --win portable --x64"
   },
   "dependencies": {
     "node-cron": "^3.0.3",
-    "pidusage":  "^3.0.2"
+    "nodemailer": "^6.10.1",
+    "pidusage": "^3.0.2"
   },
   "devDependencies": {
-    "electron":         "^28.0.0",
+    "electron": "^28.0.0",
     "electron-builder": "^24.9.1"
   },
   "build": {
@@ -32,8 +33,18 @@
     ],
     "win": {
       "target": [
-        { "target": "nsis",     "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "assets/icon.ico"
     },

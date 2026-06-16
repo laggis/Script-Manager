@@ -7,6 +7,25 @@ contextBridge.exposeInMainWorld('api', {
   removeScript:    (id)        => ipcRenderer.invoke('remove-script', id),
   updateScript:    (data)      => ipcRenderer.invoke('update-script', data),
 
+  // Groups CRUD
+  getGroups:       ()          => ipcRenderer.invoke('get-groups'),
+  addGroup:        (data)      => ipcRenderer.invoke('add-group', data),
+  updateGroup:     (data)      => ipcRenderer.invoke('update-group', data),
+  removeGroup:     (id)        => ipcRenderer.invoke('remove-group', id),
+
+  // Templates
+  getTemplates:    ()          => ipcRenderer.invoke('get-templates'),
+  createFromTemplate: (data)   => ipcRenderer.invoke('create-from-template', data),
+
+  // Backup & Restore
+  backupScripts:   ()          => ipcRenderer.invoke('backup-scripts'),
+  restoreScripts:  ()          => ipcRenderer.invoke('restore-scripts'),
+  listBackups:     ()          => ipcRenderer.invoke('list-backups'),
+
+  // Log files
+  getLogFilePath:  (id)        => ipcRenderer.invoke('get-log-file-path', id),
+  clearLogFile:    (id)        => ipcRenderer.invoke('clear-log-file', id),
+
   // Process control
   startScript:     (id)        => ipcRenderer.invoke('start-script', id),
   stopScript:      (id)        => ipcRenderer.invoke('stop-script', id),
@@ -30,6 +49,7 @@ contextBridge.exposeInMainWorld('api', {
   onLog:           (cb) => ipcRenderer.on('log',          (_, d) => cb(d)),
   onStatusUpdate:  (cb) => ipcRenderer.on('status-update',(_, d) => cb(d)),
   onStatsUpdate:   (cb) => ipcRenderer.on('stats-update', (_, d) => cb(d)),
+  onHealthUpdate:  (cb) => ipcRenderer.on('health-update',(_, d) => cb(d)),
   removeAllListeners: (ch) => ipcRenderer.removeAllListeners(ch),
 
   // Log export
@@ -44,6 +64,48 @@ contextBridge.exposeInMainWorld('api', {
   exportConfig:    ()     => ipcRenderer.invoke('export-config'),
   importConfig:    ()     => ipcRenderer.invoke('import-config'),
   openInExplorer:  (p)    => ipcRenderer.invoke('open-in-explorer', p),
+
+  // Stats History / Analytics
+  getStatsHistory: (scriptId, timeRange) => ipcRenderer.invoke('get-stats-history', { scriptId, timeRange }),
+
+  // Triggers
+  testPort:             (port)      => ipcRenderer.invoke('test-port', port),
+  generateWebhookToken: ()          => ipcRenderer.invoke('generate-webhook-token'),
+  getWebhookPort:       ()          => ipcRenderer.invoke('get-webhook-port'),
+  getTriggerStatus:     (scriptId)  => ipcRenderer.invoke('get-trigger-status', scriptId),
+
+  // Profiles / Environments
+  getProfiles:   (scriptId)                        => ipcRenderer.invoke('get-profiles', scriptId),
+  saveProfile:   (scriptId, profileName, config)   => ipcRenderer.invoke('save-profile', { scriptId, profileName, config }),
+  applyProfile:  (scriptId, profileName)           => ipcRenderer.invoke('apply-profile', { scriptId, profileName }),
+  deleteProfile: (scriptId, profileName)           => ipcRenderer.invoke('delete-profile', { scriptId, profileName }),
+
+  // Marketplace / Sharing
+  importFromUrl:    (url)      => ipcRenderer.invoke('import-from-url', url),
+  exportScriptJson: (id)       => ipcRenderer.invoke('export-script-json', id),
+
+  // Collections
+  getCollections:    ()        => ipcRenderer.invoke('get-collections'),
+  addCollection:     (data)    => ipcRenderer.invoke('add-collection', data),
+  updateCollection:  (data)    => ipcRenderer.invoke('update-collection', data),
+  deleteCollection:  (id)      => ipcRenderer.invoke('delete-collection', id),
+  startCollection:   (id)      => ipcRenderer.invoke('start-collection', id),
+  stopCollection:    (id)      => ipcRenderer.invoke('stop-collection', id),
+  reorderCollections:(ids)     => ipcRenderer.invoke('reorder-collections', ids),
+
+  // Notification Channels
+  getSmtpSettings:          ()       => ipcRenderer.invoke('get-smtp-settings'),
+  saveSmtpSettings:         (cfg)    => ipcRenderer.invoke('save-smtp-settings', cfg),
+  testEmail:                ()       => ipcRenderer.invoke('test-email'),
+  getDiscordSettings:       ()       => ipcRenderer.invoke('get-discord-settings'),
+  saveDiscordSettings:      (cfg)    => ipcRenderer.invoke('save-discord-settings', cfg),
+  testDiscord:              ()       => ipcRenderer.invoke('test-discord'),
+  getSlackSettings:         ()       => ipcRenderer.invoke('get-slack-settings'),
+  saveSlackSettings:        (cfg)    => ipcRenderer.invoke('save-slack-settings', cfg),
+  testSlack:                ()       => ipcRenderer.invoke('test-slack'),
+  getCustomWebhookSettings: ()       => ipcRenderer.invoke('get-custom-webhook-settings'),
+  saveCustomWebhookSettings:(cfg)    => ipcRenderer.invoke('save-custom-webhook-settings', cfg),
+  testCustomWebhook:        ()       => ipcRenderer.invoke('test-custom-webhook'),
 
   // Window controls
   minimize: () => ipcRenderer.send('win-minimize'),
