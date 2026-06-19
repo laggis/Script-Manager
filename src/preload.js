@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   // Scripts CRUD
   getScripts:      ()          => ipcRenderer.invoke('get-scripts'),
+  getAppVersion:   ()          => ipcRenderer.invoke('get-app-version'),
   addScript:       (data)      => ipcRenderer.invoke('add-script', data),
   removeScript:    (id)        => ipcRenderer.invoke('remove-script', id),
   updateScript:    (data)      => ipcRenderer.invoke('update-script', data),
@@ -22,8 +23,20 @@ contextBridge.exposeInMainWorld('api', {
   restoreScripts:  ()          => ipcRenderer.invoke('restore-scripts'),
   listBackups:     ()          => ipcRenderer.invoke('list-backups'),
 
+  // Dependencies / setup wizard / update / web UI
+  installDependencies: (id)    => ipcRenderer.invoke('install-dependencies', id),
+  checkDependencyTools:(id)    => ipcRenderer.invoke('check-dependency-tools', id),
+  inspectProjectFolder:(path)  => ipcRenderer.invoke('inspect-project-folder', path),
+  checkForUpdates:    (url)    => ipcRenderer.invoke('check-for-updates', url),
+  getWebUiSettings:   ()       => ipcRenderer.invoke('get-webui-settings'),
+  saveWebUiSettings:  (cfg)    => ipcRenderer.invoke('save-webui-settings', cfg),
+  generateWebUiToken: ()       => ipcRenderer.invoke('generate-webui-token'),
+  getUpdateSettings:  ()       => ipcRenderer.invoke('get-update-settings'),
+  saveUpdateSettings: (cfg)    => ipcRenderer.invoke('save-update-settings', cfg),
+
   // Log files
   getLogFilePath:  (id)        => ipcRenderer.invoke('get-log-file-path', id),
+  readLogFile:     (id, maxLines = 1000) => ipcRenderer.invoke('read-log-file', { scriptId: id, maxLines }),
   clearLogFile:    (id)        => ipcRenderer.invoke('clear-log-file', id),
 
   // Process control

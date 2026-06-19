@@ -1,6 +1,6 @@
 {
   "name": "scriptmanager",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Desktop manager for Node.js and Python scripts on Windows",
   "main": "src/main.js",
   "scripts": {
@@ -21,7 +21,7 @@
   "build": {
     "appId": "com.scriptmanager.app",
     "productName": "ScriptManager",
-    "copyright": "Copyright © 2024 ScriptManager",
+    "copyright": "Copyright \u00a9 2024 ScriptManager",
     "directories": {
       "output": "dist"
     },

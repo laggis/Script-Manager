@@ -180,3 +180,17 @@ All data is stored **next to the `.exe`** (or in the project root during dev), m
 ## License
 
 MIT
+
+
+## ScriptManager 1.6 additions
+
+This build adds the requested features:
+
+- Remote Web Panel with token protection, configurable host/port, and browser start/stop/restart controls.
+- Dependency Installer for Node.js and Python projects using `npm install`, `npm ci`, or `pip install -r requirements.txt`.
+- Better Logs page with search, filters, tail size, saved log loading, open log file, clear memory log, and clear saved log file.
+- Full Backup / Restore for scripts, groups, templates, profiles, collections, settings, stats history, script files, and logs.
+- Update Checker that can check a GitHub latest-release API URL or a simple plain-text/JSON version URL.
+- Setup Wizard that detects common Node.js, Python, PowerShell, and batch projects from a selected folder.
+
+Security note: keep the Remote Web Panel on `127.0.0.1` unless you are exposing it only through a firewall, VPN, or reverse proxy with extra authentication.

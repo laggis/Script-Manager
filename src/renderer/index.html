@@ -298,7 +298,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 <div id="titlebar">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3" stroke-width="1.5"/><path d="M13 14h4" stroke-width="1.5"/></svg>
-    ScriptManager <span class="sub">v1.5</span>
+    ScriptManager <span class="sub">v1.6</span>
   </div>
   <div class="winbtns">
     <button class="winbtn min"   onclick="window.api.minimize()"></button>
@@ -345,7 +345,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
     Settings
   </div>
   <div class="sidebar-spacer"></div>
-  <div class="sidebar-footer">ScriptManager v1.5.0</div>
+  <div class="sidebar-footer">ScriptManager v1.6.0</div>
 </div>
 
 <!-- Content -->
@@ -381,6 +381,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
         </div>
         <button class="btn btn-ghost btn-sm" id="btn-start-all">▶ Start All</button>
         <button class="btn btn-ghost btn-sm" id="btn-stop-all">■ Stop All</button>
+        <button class="btn btn-ghost btn-sm" id="btn-setup-wizard">🧙 Setup Wizard</button>
         <button class="btn btn-primary" id="btn-add-script">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Register Script <span style="font-size:10px;opacity:.5;font-weight:400;">(Ctrl+N)</span>
@@ -421,7 +422,23 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
     <div class="logs-bar">
       <h2>Logs</h2>
       <select class="lsel" id="log-select"><option value="">— Select Script —</option></select>
+      <input type="text" id="log-search" placeholder="Search logs…" style="width:170px;background:var(--panel);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;" oninput="renderActiveLog()"/>
+      <select class="lsel" id="log-filter" onchange="renderActiveLog()">
+        <option value="all">All lines</option>
+        <option value="errors">Errors only</option>
+        <option value="warnings">Warnings</option>
+        <option value="system">System</option>
+      </select>
+      <select class="lsel" id="log-tail" onchange="renderActiveLog()">
+        <option value="100">Last 100</option>
+        <option value="500" selected>Last 500</option>
+        <option value="1000">Last 1000</option>
+        <option value="3000">Last 3000</option>
+      </select>
       <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="btn-log-load-disk">📖 Load File</button>
+        <button class="btn btn-ghost btn-sm" id="btn-log-open-file">📂 Open</button>
+        <button class="btn btn-ghost btn-sm" id="btn-log-clear-disk">Clear File</button>
         <button class="btn btn-ghost btn-sm" id="btn-log-export">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export .txt
@@ -555,6 +572,46 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
           <div id="cfg-status" style="font-size:12px;color:var(--accent);align-self:center;font-family:var(--font-mono);"></div>
         </div>
       </div>
+    </div>
+
+    <div class="scard">
+      <h3>🌐 Remote Web Panel</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Control scripts from a browser. Default is localhost-only for safety.</p>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Enable Web Panel</div>
+            <div id="webui-status" style="font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono);">Checking…</div>
+          </div>
+          <label class="tgl"><input type="checkbox" id="webui-enabled"/><span class="tgl-sl"></span></label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 120px;gap:8px;">
+          <div class="fg"><label>Host</label><input type="text" id="webui-host" placeholder="127.0.0.1"/><div class="hint">Use 127.0.0.1 for local only. Use 0.0.0.0 only behind firewall/VPN.</div></div>
+          <div class="fg"><label>Port</label><input type="number" id="webui-port" value="3333" min="1" max="65535"/></div>
+        </div>
+        <div class="fg"><label>Access Token</label><div class="irow"><input type="text" id="webui-token" style="font-family:var(--font-mono);font-size:12px;"/><button class="btn btn-ghost btn-sm" onclick="generateWebUiToken()">Generate</button></div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="saveWebUiSettings()">💾 Save Web Panel</button><button class="btn btn-ghost btn-sm" onclick="copyWebUiUrl()">📋 Copy URL</button><span id="webui-save-status" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span></div>
+      </div>
+    </div>
+
+    <div class="scard">
+      <h3>⬆️ Update Checker</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Checks a configurable version URL. For GitHub, use the latest release API endpoint.</p>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div><div style="font-size:13px;font-weight:700;color:var(--text);">Enable update checks</div><div style="font-size:11px;color:var(--muted);margin-top:3px;">Manual check button works even if disabled.</div></div>
+          <label class="tgl"><input type="checkbox" id="upd-enabled"/><span class="tgl-sl"></span></label>
+        </div>
+        <div class="fg"><label>Update URL</label><input type="text" id="upd-url" placeholder="https://api.github.com/repos/OWNER/REPO/releases/latest"/><div class="hint">Response can be GitHub release JSON or plain text like v1.6.1.</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="saveUpdateSettings()">💾 Save</button><button class="btn btn-ghost btn-sm" onclick="checkUpdatesNow()">🔍 Check Now</button><span id="upd-status" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span></div>
+      </div>
+    </div>
+
+    <div class="scard">
+      <h3>📦 Full Backup / Restore</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Backs up scripts, groups, templates, profiles, collections, settings, stats history, script files, and logs.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="createFullBackup()">📦 Create Full Backup</button><button class="btn btn-ghost btn-sm" onclick="restoreFullBackup()">♻ Restore Backup</button><button class="btn btn-ghost btn-sm" onclick="refreshBackups()">↻ Refresh List</button><span id="backup-status" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span></div>
+      <div id="backup-list" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
     </div>
 
     <div class="scard">
@@ -1214,6 +1271,31 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
   </div>
 </div>
 
+<!-- Setup Wizard Modal -->
+<div class="moverlay" id="wizard-overlay">
+  <div class="modal" style="width:760px;">
+    <div class="mhead"><h3>🧙 Script Setup Wizard</h3><button class="mx" id="wizard-x">×</button></div>
+    <div class="mbody">
+      <div class="msect">1. Select project folder</div>
+      <div class="fg">
+        <label>Project Folder</label>
+        <div class="irow">
+          <input type="text" id="wiz-folder" placeholder="C:\bots\my-project"/>
+          <button class="btn btn-ghost btn-sm" id="wiz-browse">Browse</button>
+          <button class="btn btn-primary btn-sm" id="wiz-detect">Detect</button>
+        </div>
+        <div class="hint">The wizard detects package.json, requirements.txt, main.py, app.py, .ps1, .bat and similar files.</div>
+      </div>
+      <div class="msect" style="margin-top:16px;">2. Detected setup</div>
+      <div id="wiz-results" style="border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:12px;min-height:120px;color:var(--muted);font-size:12px;">Select a folder and click Detect.</div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" id="wizard-cancel">Cancel</button>
+      <button class="btn btn-primary" id="wizard-create" disabled>Create Script</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── State ────────────────────────────────────────────────────────────────────
 let scripts = [];
@@ -1412,6 +1494,20 @@ const doRestart = id => window.api.restartScript(id);
 const doGitPull = id => window.api.gitPull(id);
 const doGitPullRestart = id => window.api.gitPullRestart(id);
 
+async function installDeps(id) {
+  const script = scripts.find(s => s.id === id);
+  if (!script) return;
+  openLogs(id);
+  const check = await window.api.checkDependencyTools(id);
+  if (check.ok && check.tools) {
+    const missing = check.tools.filter(t => !t.ok).map(t => t.name);
+    if (missing.length && !confirm(`Missing tools: ${missing.join(', ')}\nTry dependency install anyway?`)) return;
+  }
+  const r = await window.api.installDependencies(id);
+  if (r.ok) showToast(`Installing dependencies for ${script.name}`);
+  else alert('Dependency install could not start: ' + (r.error || 'Unknown error'));
+}
+
 async function doDelete(id) {
   if (!confirm('Remove this script?')) return;
   await window.api.removeScript(id);
@@ -1439,6 +1535,21 @@ function refreshSelects() {
 }
 
 // ─── Logs ─────────────────────────────────────────────────────────────────────
+function logLineMatches(entry) {
+  const text = (entry.text || '').toString();
+  const q = (document.getElementById('log-search')?.value || '').toLowerCase().trim();
+  const filter = document.getElementById('log-filter')?.value || 'all';
+  const lower = text.toLowerCase();
+  if (q && !lower.includes(q)) return false;
+  if (filter === 'errors') return lower.includes('[err') || lower.includes('error') || lower.includes('failed') || lower.includes('crash');
+  if (filter === 'warnings') return lower.includes('[warn') || lower.includes('warning') || lower.includes('warn');
+  if (filter === 'system') return /^[▶■↻⏰✓🔄📦📁⛙]/.test(text.trim()) || lower.includes('[auto-action]') || lower.includes('[health') || lower.includes('[port') || lower.includes('[file watch');
+  return true;
+}
+function getVisibleLogEntries(id) {
+  const tail = parseInt(document.getElementById('log-tail')?.value || '500', 10);
+  return (logBuffers[id] || []).filter(logLineMatches).slice(-tail);
+}
 function openLogs(id) {
   gotoPage('logs');
   document.getElementById('log-select').value = id;
@@ -1447,22 +1558,49 @@ function openLogs(id) {
 document.getElementById('log-select').addEventListener('change', e => switchLog(e.target.value));
 function switchLog(id) {
   activeLog = id || null;
+  renderActiveLog();
+}
+function renderActiveLog() {
   const out = document.getElementById('log-out');
   out.innerHTML = '';
-  if (!id) { out.innerHTML='<div class="ll-empty">Select a script to view its output.</div>'; return; }
-  const buf = logBuffers[id] || [];
-  if (!buf.length) { out.innerHTML='<div class="ll-empty">No output yet.</div>'; return; }
-  buf.forEach(({text,ts}) => appendToLog(text, ts));
+  if (!activeLog) { out.innerHTML='<div class="ll-empty">Select a script to view its output.</div>'; return; }
+  const entries = getVisibleLogEntries(activeLog);
+  if (!entries.length) { out.innerHTML='<div class="ll-empty">No matching log lines.</div>'; return; }
+  entries.forEach(({text,ts}) => _appendLine(out, text, ts, false));
+  if (logScroll) out.scrollTop = out.scrollHeight;
 }
 function appendToLog(text, ts) {
   if (!activeLog) return;
+  const entry = { text, ts };
+  if (!logLineMatches(entry)) return;
   const out = document.getElementById('log-out');
   out.querySelector('.ll-empty')?.remove();
   _appendLine(out, text, ts, logScroll);
 }
 document.getElementById('btn-log-clear').addEventListener('click', () => {
   if (activeLog) logBuffers[activeLog] = [];
-  document.getElementById('log-out').innerHTML='<div class="ll-empty">Cleared.</div>';
+  document.getElementById('log-out').innerHTML='<div class="ll-empty">Cleared in-memory output.</div>';
+});
+document.getElementById('btn-log-clear-disk').addEventListener('click', async () => {
+  if (!activeLog) return;
+  if (!confirm('Clear the saved log file for this script?')) return;
+  const r = await window.api.clearLogFile(activeLog);
+  if (r.ok) { logBuffers[activeLog] = []; renderActiveLog(); showToast('Log file cleared'); }
+  else alert('Could not clear log file: ' + (r.error || 'Unknown error'));
+});
+document.getElementById('btn-log-load-disk').addEventListener('click', async () => {
+  if (!activeLog) return;
+  const tail = parseInt(document.getElementById('log-tail')?.value || '500', 10);
+  const r = await window.api.readLogFile(activeLog, Math.max(tail, 1000));
+  if (!r.ok) { alert('Could not read log file: ' + (r.error || 'Unknown error')); return; }
+  logBuffers[activeLog] = (r.lines || []).map(line => ({ text: line + '\n', ts: Date.now() }));
+  renderActiveLog();
+  showToast(`Loaded ${r.lines.length} saved log lines`);
+});
+document.getElementById('btn-log-open-file').addEventListener('click', async () => {
+  if (!activeLog) return;
+  const p = await window.api.getLogFilePath(activeLog);
+  if (p) await window.api.openInExplorer(p);
 });
 document.getElementById('btn-log-scroll').addEventListener('click', function() {
   logScroll=!logScroll; this.textContent=(logScroll?'⬇':'—')+' Auto-scroll: '+(logScroll?'ON':'OFF');
@@ -1556,6 +1694,9 @@ function gotoPage(name) {
     loadConfigPaths();
     loadStartupState();
     loadNotificationSettings();
+    loadWebUiSettings();
+    loadUpdateSettings();
+    refreshBackups();
   } else if (name === 'collections') {
     colInit();
   } else if (name === 'marketplace') {
@@ -2068,6 +2209,7 @@ function renderTable() {
             :`<button class="ibtn start" title="Start" onclick="doStart('${s.id}')">${iPlay()}</button>`}
           <button class="ibtn" title="Restart" onclick="doRestart('${s.id}')">${iRestart()}</button>
           ${s.gitEnabled ? `<button class="ibtn git" title="Git Pull & Restart" onclick="doGitPullRestart('${s.id}')">${iGit()}</button>` : ''}
+          <button class="ibtn" title="Install Dependencies" onclick="installDeps('${s.id}')" style="font-size:14px;">📦</button>
           <button class="ibtn con" title="Open Console" onclick="openConsole('${s.id}')">${iCon()}</button>
           <button class="ibtn"     title="Logs"         onclick="openLogs('${s.id}')">${iLog()}</button>
           <button class="ibtn"     title="Profiles / Environments" onclick="openProfileSwitcher('${s.id}',this)" style="font-size:14px;">🔄</button>
@@ -2422,6 +2564,83 @@ document.getElementById('an-refresh-btn').addEventListener('click', renderAnalyt
 
 // (nav click handlers are registered above, near the Nav section)
 
+// ─── Setup Wizard ────────────────────────────────────────────────────────────
+let wizardSuggestion = null;
+function openWizard() {
+  wizardSuggestion = null;
+  document.getElementById('wiz-folder').value = '';
+  document.getElementById('wiz-results').innerHTML = 'Select a folder and click Detect.';
+  document.getElementById('wizard-create').disabled = true;
+  document.getElementById('wizard-overlay').classList.add('open');
+}
+function closeWizard() {
+  document.getElementById('wizard-overlay').classList.remove('open');
+}
+async function wizardBrowse() {
+  const p = await window.api.browseFolder();
+  if (p) document.getElementById('wiz-folder').value = p;
+}
+async function wizardDetect() {
+  const folder = document.getElementById('wiz-folder').value.trim();
+  const box = document.getElementById('wiz-results');
+  box.innerHTML = '<span style="color:var(--muted);">Detecting…</span>';
+  const r = await window.api.inspectProjectFolder(folder);
+  if (!r.ok) {
+    box.innerHTML = `<span style="color:var(--danger);">${esc(r.error || 'Detection failed')}</span>`;
+    document.getElementById('wizard-create').disabled = true;
+    return;
+  }
+  if (!r.suggestions || !r.suggestions.length) {
+    wizardSuggestion = null;
+    box.innerHTML = `<div style="color:var(--warn);font-weight:700;margin-bottom:8px;">No ready script detected.</div><div>${esc(r.warning || 'Try registering this folder manually.')}</div>`;
+    document.getElementById('wizard-create').disabled = true;
+    return;
+  }
+  wizardSuggestion = r.suggestions[0];
+  box.innerHTML = r.suggestions.map((sg, i) => `
+    <label style="display:block;border:1px solid ${i===0?'var(--accent)':'var(--border2)'};border-radius:8px;padding:10px;margin-bottom:8px;background:var(--panel);cursor:pointer;">
+      <input type="radio" name="wiz-sg" value="${i}" ${i===0?'checked':''} onchange="wizardSuggestionIndex(${i})" style="margin-right:8px;"/>
+      <strong style="color:var(--text);">${esc(sg.name)}</strong> <span class="tb ${typeBadge(sg.type)}" style="margin-left:6px;">${typeLabel(sg.type)}</span>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:5px;">${esc(sg.path || sg.cwd)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:5px;">${esc(sg.notes || '')}</div>
+      ${sg.installCommand ? `<div style="font-size:11px;color:var(--accent);font-family:var(--font-mono);margin-top:6px;">Deps: ${esc(sg.installCommand)}</div>` : ''}
+    </label>`).join('') + `<div style="font-size:11px;color:var(--muted);margin-top:8px;">After creating it, use the 📦 button in the Scripts table to install dependencies.</div>`;
+  window._wizardSuggestions = r.suggestions;
+  document.getElementById('wizard-create').disabled = false;
+}
+function wizardSuggestionIndex(i) {
+  wizardSuggestion = (window._wizardSuggestions || [])[i] || null;
+}
+async function wizardCreate() {
+  if (!wizardSuggestion) return;
+  const data = {
+    ...wizardSuggestion,
+    autoStart: false,
+    autoRestart: 'on-failure',
+    cronEnabled: false,
+    cronSchedule: '',
+    env: [],
+    groupId: 'default',
+    dependencies: [],
+    resourceLimitsEnabled: false,
+    healthCheckEnabled: false,
+    outputPatterns: [],
+  };
+  const created = await window.api.addScript(data);
+  scripts.push(created);
+  renderAll();
+  closeWizard();
+  showToast(`Created ${created.name}`);
+  gotoPage('scripts');
+}
+document.getElementById('btn-setup-wizard')?.addEventListener('click', openWizard);
+document.getElementById('wizard-x')?.addEventListener('click', closeWizard);
+document.getElementById('wizard-cancel')?.addEventListener('click', closeWizard);
+document.getElementById('wizard-overlay')?.addEventListener('click', e=>{if(e.target===e.currentTarget)closeWizard();});
+document.getElementById('wiz-browse')?.addEventListener('click', wizardBrowse);
+document.getElementById('wiz-detect')?.addEventListener('click', wizardDetect);
+document.getElementById('wizard-create')?.addEventListener('click', wizardCreate);
+
 // ─── Keyboard Shortcuts ───────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   const tag = document.activeElement?.tagName?.toLowerCase();
@@ -2456,6 +2675,10 @@ document.addEventListener('keydown', e => {
   // Escape — close modal if open
   if (e.key === 'Escape' && document.getElementById('modal-overlay').classList.contains('open')) {
     closeModal();
+    return;
+  }
+  if (e.key === 'Escape' && document.getElementById('wizard-overlay').classList.contains('open')) {
+    closeWizard();
     return;
   }
   // / — focus search from anywhere (when not in input)
@@ -2531,6 +2754,102 @@ async function loadConfigPaths() {
   if (bd) bd.textContent = configPaths.backupDir || '—';
 }
 
+// ─── Remote Web Panel / Updates / Backups ────────────────────────────────────
+async function loadWebUiSettings() {
+  try {
+    const s = await window.api.getWebUiSettings();
+    const en = document.getElementById('webui-enabled');
+    if (!en) return;
+    en.checked = !!s.configured;
+    document.getElementById('webui-host').value = s.host || '127.0.0.1';
+    document.getElementById('webui-port').value = s.port || 3333;
+    document.getElementById('webui-token').value = s.token || '';
+    const st = document.getElementById('webui-status');
+    st.textContent = s.running ? `Running: ${s.url}` : (s.configured ? 'Enabled but not running yet' : 'Disabled');
+    st.style.color = s.running ? 'var(--accent)' : 'var(--muted)';
+  } catch (e) {}
+}
+async function generateWebUiToken() {
+  const r = await window.api.generateWebUiToken();
+  document.getElementById('webui-token').value = r.token;
+}
+async function saveWebUiSettings() {
+  const cfg = {
+    enabled: document.getElementById('webui-enabled').checked,
+    host: document.getElementById('webui-host').value.trim() || '127.0.0.1',
+    port: parseInt(document.getElementById('webui-port').value, 10) || 3333,
+    token: document.getElementById('webui-token').value.trim(),
+  };
+  const r = await window.api.saveWebUiSettings(cfg);
+  const st = document.getElementById('webui-save-status');
+  st.textContent = r.ok ? `✅ Saved ${r.running ? 'and running' : ''}` : '❌ ' + (r.error || 'Failed');
+  st.style.color = r.ok ? 'var(--accent)' : 'var(--danger)';
+  await loadWebUiSettings();
+}
+async function copyWebUiUrl() {
+  const s = await window.api.getWebUiSettings();
+  const url = `${s.url}?token=${encodeURIComponent(s.token || '')}`;
+  await navigator.clipboard.writeText(url).catch(()=>{});
+  showToast('Web panel URL copied');
+}
+async function loadUpdateSettings() {
+  try {
+    const s = await window.api.getUpdateSettings();
+    const en = document.getElementById('upd-enabled');
+    if (!en) return;
+    en.checked = !!s.enabled;
+    document.getElementById('upd-url').value = s.url || '';
+  } catch (e) {}
+}
+async function saveUpdateSettings() {
+  const cfg = { enabled: document.getElementById('upd-enabled').checked, url: document.getElementById('upd-url').value.trim() };
+  const r = await window.api.saveUpdateSettings(cfg);
+  ncStatus('upd-status', r.ok ? '✅ Saved' : '❌ Failed', r.ok);
+}
+async function checkUpdatesNow() {
+  const status = document.getElementById('upd-status');
+  status.textContent = 'Checking…'; status.style.color = 'var(--muted)';
+  const url = document.getElementById('upd-url').value.trim();
+  const r = await window.api.checkForUpdates(url);
+  if (!r.ok) { status.textContent = '❌ ' + (r.error || 'Failed'); status.style.color = 'var(--danger)'; return; }
+  status.textContent = r.updateAvailable ? `✅ Update available: ${r.latest} (current ${r.current})` : `Up to date: ${r.current}`;
+  status.style.color = r.updateAvailable ? 'var(--accent)' : 'var(--muted)';
+}
+function fmtBytes(n) {
+  if (!n) return '0 B';
+  const u = ['B','KB','MB','GB']; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(i ? 1 : 0)} ${u[i]}`;
+}
+async function createFullBackup() {
+  const r = await window.api.backupScripts();
+  const st = document.getElementById('backup-status');
+  st.textContent = r.ok ? `✅ Backup created: ${r.path}` : '❌ ' + (r.error || 'Failed');
+  st.style.color = r.ok ? 'var(--accent)' : 'var(--danger)';
+  refreshBackups();
+}
+async function restoreFullBackup() {
+  if (!confirm('Restore a full backup? Running scripts should be stopped first. This may replace your current config.')) return;
+  const r = await window.api.restoreScripts();
+  const st = document.getElementById('backup-status');
+  if (r.ok) {
+    scripts = await window.api.getScripts();
+    groups = await window.api.getGroups();
+    logBuffers = {}; statsCache = {}; activeLog = null; activeCon = null;
+    renderAll(); populateGroupDropdown();
+    st.textContent = `✅ Restored ${r.count || 0} items`;
+    st.style.color = 'var(--accent)';
+  } else if (r.error) {
+    st.textContent = '❌ ' + r.error; st.style.color = 'var(--danger)';
+  }
+}
+async function refreshBackups() {
+  const box = document.getElementById('backup-list');
+  if (!box) return;
+  const list = await window.api.listBackups();
+  if (!list.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);">No full backups yet.</div>'; return; }
+  box.innerHTML = list.slice(0, 8).map(b => `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--panel);border-radius:6px;padding:8px 10px;font-size:12px;"><div style="flex:1;"><strong>${esc(b.name)}</strong><div style="font-family:var(--font-mono);color:var(--muted);font-size:11px;">${new Date(b.timestamp).toLocaleString()} · ${fmtBytes(b.size || 0)}</div></div><button class="btn btn-ghost btn-xs" onclick="window.api.openInExplorer('${b.path.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">Show</button></div>`).join('');
+}
 
 // ══════════════════════════════════════════════════════════════════
 // NOTIFICATION CHANNELS

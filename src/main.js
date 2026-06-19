@@ -57,6 +57,52 @@ const ICON_PNG    = path.join(__dirname, '../assets/icon.png');
 const TRAY_16     = path.join(__dirname, '../assets/tray-16.png');
 const TRAY_32     = path.join(__dirname, '../assets/tray-32.png');
 
+const APP_VERSION = (() => {
+  try { return require('../package.json').version || app.getVersion(); }
+  catch (_) { return app.getVersion(); }
+})();
+
+function defaultSettings() {
+  return {
+    smtp: { enabled: false },
+    webUI: {
+      enabled: false,
+      host: '127.0.0.1',
+      port: 3333,
+      token: '',
+    },
+    updateCheck: {
+      enabled: false,
+      url: '',
+    },
+  };
+}
+
+function mergeSettings(base, extra) {
+  const out = { ...base, ...(extra || {}) };
+  out.smtp = { ...(base.smtp || {}), ...((extra || {}).smtp || {}) };
+  out.webUI = { ...(base.webUI || {}), ...((extra || {}).webUI || {}) };
+  out.updateCheck = { ...(base.updateCheck || {}), ...((extra || {}).updateCheck || {}) };
+  return out;
+}
+
+function escapeHtml(v) {
+  return String(v ?? '').replace(/[&<>'"]/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[c]));
+}
+
+function compareVersions(a, b) {
+  const clean = v => String(v || '0').replace(/^v/i, '').split(/[.-]/).map(x => parseInt(x, 10) || 0);
+  const aa = clean(a), bb = clean(b);
+  for (let i = 0; i < Math.max(aa.length, bb.length); i++) {
+    const x = aa[i] || 0, y = bb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
 // ── Persistence ───────────────────────────────────────────────────────────────
 function loadScripts() {
   try {
@@ -149,12 +195,13 @@ function loadCollections() {
 }
 
 function loadSettings() {
+  const defaults = defaultSettings();
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
-      return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+      return mergeSettings(defaults, JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')));
     }
   } catch { }
-  return { smtp: { enabled: false } };
+  return defaults;
 }
 
 function loadStatsHistory() {
@@ -362,6 +409,18 @@ app.whenReady().then(() => {
   setInterval(rotateLogs, 24 * 60 * 60 * 1000);
   // Start web UI if enabled
   startWebUI();
+  // Check for updates on startup if enabled
+  try {
+    const upd = loadSettings().updateCheck || {};
+    if (upd.enabled && upd.url) {
+      setTimeout(async () => {
+        const r = await checkForUpdates();
+        if (r.ok && r.updateAvailable) {
+          notify('⬆️ ScriptManager update available', `Version ${r.latest} is available. Current version: ${r.current}.`);
+        }
+      }, 5000);
+    }
+  } catch (_) {}
   // Start triggers for configured scripts
   scripts.forEach(s => { 
     if (s.fileWatchEnabled) startFileWatcher(s.id);
@@ -1414,123 +1473,419 @@ function exportScriptAsJson(scriptId) {
 }
 
 // ── Backup & Restore ──────────────────────────────────────────────────────────
-function backupScriptFiles() {
+function safeCopyFile(src, dest) {
+  try {
+    if (!src || !fs.existsSync(src) || fs.statSync(src).isDirectory()) return false;
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+    return true;
+  } catch (_) { return false; }
+}
+
+function safeCopyDir(src, dest) {
+  try {
+    if (!src || !fs.existsSync(src)) return false;
+    const stat = fs.statSync(src);
+    if (!stat.isDirectory()) return safeCopyFile(src, dest);
+    fs.mkdirSync(dest, { recursive: true });
+    for (const name of fs.readdirSync(src)) {
+      const from = path.join(src, name);
+      const to = path.join(dest, name);
+      const st = fs.statSync(from);
+      if (st.isDirectory()) safeCopyDir(from, to);
+      else safeCopyFile(from, to);
+    }
+    return true;
+  } catch (_) { return false; }
+}
+
+function recursiveSize(dir) {
+  try {
+    if (!fs.existsSync(dir)) return 0;
+    const st = fs.statSync(dir);
+    if (!st.isDirectory()) return st.size;
+    return fs.readdirSync(dir).reduce((sum, name) => sum + recursiveSize(path.join(dir, name)), 0);
+  } catch (_) { return 0; }
+}
+
+function fullBackupFiles() {
+  return [
+    { key: 'scripts', file: DATA_FILE, name: 'scripts.json' },
+    { key: 'groups', file: GROUPS_FILE, name: 'groups.json' },
+    { key: 'templates', file: TEMPLATES_FILE, name: 'templates.json' },
+    { key: 'profiles', file: PROFILES_FILE, name: 'profiles.json' },
+    { key: 'collections', file: COLLECTIONS_FILE, name: 'collections.json' },
+    { key: 'settings', file: SETTINGS_FILE, name: 'settings.json' },
+    { key: 'statsHistory', file: STATS_HISTORY_FILE, name: 'stats-history.json' },
+  ];
+}
+
+function backupScriptFiles(options = {}) {
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   const backupPath = path.join(BACKUP_DIR, `full-backup-${timestamp}`);
-  
-  if (!fs.existsSync(backupPath)) {
-    fs.mkdirSync(backupPath, { recursive: true });
+  fs.mkdirSync(backupPath, { recursive: true });
+  fs.mkdirSync(path.join(backupPath, 'config'), { recursive: true });
+  fs.mkdirSync(path.join(backupPath, 'script-files'), { recursive: true });
+
+  const manifest = {
+    app: 'ScriptManager',
+    version: APP_VERSION,
+    timestamp,
+    createdAt: new Date().toISOString(),
+    dataDir: DATA_DIR,
+    configFiles: [],
+    scripts: [],
+    logsIncluded: !!options.includeLogs,
+  };
+
+  for (const item of fullBackupFiles()) {
+    if (fs.existsSync(item.file)) {
+      const dest = path.join(backupPath, 'config', item.name);
+      if (safeCopyFile(item.file, dest)) manifest.configFiles.push({ key: item.key, name: item.name });
+    }
   }
-  
-  const manifest = { timestamp, scripts: [] };
-  
+
   scripts.forEach(script => {
     try {
-      if (script.path && fs.existsSync(script.path)) {
-        const fileName = path.basename(script.path);
-        const destPath = path.join(backupPath, `${script.id}-${fileName}`);
-        fs.copyFileSync(script.path, destPath);
-        
+      if (!script.path || !fs.existsSync(script.path)) return;
+      const stat = fs.statSync(script.path);
+      if (stat.isDirectory()) return; // Project folders are usually huge; config is backed up instead.
+      const fileName = path.basename(script.path);
+      const backupFile = path.join('script-files', `${script.id}-${fileName}`);
+      const destPath = path.join(backupPath, backupFile);
+      if (safeCopyFile(script.path, destPath)) {
         manifest.scripts.push({
           id: script.id,
           name: script.name,
           originalPath: script.path,
-          backupFile: `${script.id}-${fileName}`
+          backupFile,
         });
       }
     } catch (e) {
       console.error(`Failed to backup script ${script.id}:`, e.message);
     }
   });
-  
-  // Save manifest
-  fs.writeFileSync(
-    path.join(backupPath, 'manifest.json'),
-    JSON.stringify(manifest, null, 2)
-  );
-  
-  // Copy config files
-  if (fs.existsSync(DATA_FILE)) {
-    fs.copyFileSync(DATA_FILE, path.join(backupPath, 'scripts.json'));
+
+  if (options.includeLogs !== false && fs.existsSync(LOGS_DIR)) {
+    safeCopyDir(LOGS_DIR, path.join(backupPath, 'logs'));
+    manifest.logsIncluded = true;
   }
-  if (fs.existsSync(GROUPS_FILE)) {
-    fs.copyFileSync(GROUPS_FILE, path.join(backupPath, 'groups.json'));
-  }
-  
-  return { ok: true, path: backupPath };
+
+  fs.writeFileSync(path.join(backupPath, 'manifest.json'), JSON.stringify(manifest, null, 2));
+  return { ok: true, path: backupPath, manifest, size: recursiveSize(backupPath) };
 }
 
 function restoreScriptFiles(backupPath) {
   try {
     const manifestPath = path.join(backupPath, 'manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-      return { ok: false, error: 'Invalid backup: manifest.json not found' };
-    }
-    
+    if (!fs.existsSync(manifestPath)) return { ok: false, error: 'Invalid backup: manifest.json not found' };
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const restored = [];
-    
-    manifest.scripts.forEach(entry => {
+
+    const configDir = path.join(backupPath, 'config');
+    const configTargets = {
+      'scripts.json': DATA_FILE,
+      'groups.json': GROUPS_FILE,
+      'templates.json': TEMPLATES_FILE,
+      'profiles.json': PROFILES_FILE,
+      'collections.json': COLLECTIONS_FILE,
+      'settings.json': SETTINGS_FILE,
+      'stats-history.json': STATS_HISTORY_FILE,
+    };
+    Object.entries(configTargets).forEach(([name, target]) => {
+      const src = path.join(configDir, name);
+      if (fs.existsSync(src) && safeCopyFile(src, target)) restored.push(name);
+    });
+
+    (manifest.scripts || []).forEach(entry => {
       const backupFile = path.join(backupPath, entry.backupFile);
       if (fs.existsSync(backupFile) && fs.existsSync(path.dirname(entry.originalPath))) {
         fs.copyFileSync(backupFile, entry.originalPath);
-        restored.push(entry.name);
+        restored.push(entry.name || path.basename(entry.originalPath));
       }
     });
-    
-    return { ok: true, restored };
+
+    const logsSrc = path.join(backupPath, 'logs');
+    if (fs.existsSync(logsSrc)) {
+      safeCopyDir(logsSrc, LOGS_DIR);
+      restored.push('logs');
+    }
+
+    loadScripts(); loadGroups(); loadTemplates(); loadProfiles(); loadCollections(); loadStatsHistory();
+    scripts.forEach(s => { s.status = 'stopped'; s.pid = null; s.startedAt = null; });
+    saveScripts();
+    updateTrayMenu();
+    return { ok: true, restored, count: restored.length };
   } catch (e) {
     return { ok: false, error: e.message };
   }
 }
 
+// ── Dependency Installer ─────────────────────────────────────────────────────
+function resolveWorkingDir(script) {
+  if (!script) return DATA_DIR;
+  if (script.cwd && script.cwd.trim()) return script.cwd.trim();
+  if (script.path && script.path.trim()) {
+    const pth = script.path.trim();
+    try { return fs.statSync(pth).isDirectory() ? pth : path.dirname(pth); }
+    catch (_) { return path.dirname(pth); }
+  }
+  return DATA_DIR;
+}
+
+function detectDependencyPlan(script) {
+  if (!script) return { ok: false, error: 'Script not found' };
+  const cwd = resolveWorkingDir(script);
+  const packageJson = path.join(cwd, 'package.json');
+  const packageLock = path.join(cwd, 'package-lock.json');
+  const requirements = path.join(cwd, 'requirements.txt');
+  const pyproject = path.join(cwd, 'pyproject.toml');
+
+  if (fs.existsSync(packageJson) || ['node', 'discord-node', 'node-npm-start', 'node-npm-dev', 'bun', 'deno'].includes(script.type)) {
+    const command = fs.existsSync(packageLock) ? 'npm ci' : 'npm install';
+    return { ok: true, type: 'node', cwd, command, reason: fs.existsSync(packageLock) ? 'package-lock.json found' : 'package.json / Node project detected' };
+  }
+
+  if (fs.existsSync(requirements) || fs.existsSync(pyproject) || ['python', 'discord-python'].includes(script.type)) {
+    const runtime = (script.runtime && script.runtime.trim()) || 'python';
+    const command = fs.existsSync(requirements)
+      ? `${runtime} -m pip install -r requirements.txt`
+      : `${runtime} -m pip install -e .`;
+    return { ok: true, type: 'python', cwd, command, reason: fs.existsSync(requirements) ? 'requirements.txt found' : 'Python project detected' };
+  }
+
+  return { ok: false, error: 'No supported dependency file found. Expected package.json, requirements.txt, or pyproject.toml.' };
+}
+
+function installDependencies(scriptId) {
+  const script = getScript(scriptId);
+  const plan = detectDependencyPlan(script);
+  if (!plan.ok) return plan;
+
+  appendLog(scriptId, `📦 Installing dependencies: ${plan.command}\n`);
+  appendLog(scriptId, `📁 Dependency cwd: ${plan.cwd}\n`);
+  notify(`📦 ${script.name}`, 'Dependency install started');
+
+  const proc = spawn(plan.command, [], { cwd: plan.cwd, shell: true, env: process.env, windowsHide: true });
+  proc.stdout.on('data', d => appendLog(scriptId, d.toString()));
+  proc.stderr.on('data', d => appendLog(scriptId, `[ERR] ${d.toString()}`));
+  proc.on('close', code => {
+    appendLog(scriptId, `📦 Dependency install finished with code ${code}\n`);
+    notify(code === 0 ? `✅ ${script.name}` : `❌ ${script.name}`, code === 0 ? 'Dependencies installed' : 'Dependency install failed — check logs');
+  });
+  proc.on('error', e => appendLog(scriptId, `[ERROR] Dependency install failed: ${e.message}\n`));
+  return { ok: true, ...plan };
+}
+
+function checkDependencyTools(scriptId) {
+  const script = getScript(scriptId);
+  if (!script) return { ok: false, error: 'Script not found' };
+  const plan = detectDependencyPlan(script);
+  const tools = [];
+  const cmd = process.platform === 'win32' ? 'where' : 'which';
+  const names = plan.type === 'python' ? ['python', 'pip'] : ['node', 'npm'];
+  for (const name of names) {
+    try {
+      const found = execSync(`${cmd} ${name}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim().split(/\r?\n/)[0];
+      tools.push({ name, ok: true, path: found });
+    } catch (_) {
+      tools.push({ name, ok: false, path: '' });
+    }
+  }
+  return { ok: true, plan, tools };
+}
+
+// ── Setup Wizard Detection ───────────────────────────────────────────────────
+function inspectProjectFolder(projectDir) {
+  try {
+    if (!projectDir || !fs.existsSync(projectDir) || !fs.statSync(projectDir).isDirectory()) {
+      return { ok: false, error: 'Select a valid project folder.' };
+    }
+    const files = new Set(fs.readdirSync(projectDir));
+    const result = { ok: true, cwd: projectDir, files: Array.from(files), suggestions: [] };
+
+    if (files.has('package.json')) {
+      let pkg = {};
+      try { pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')); } catch (_) {}
+      const scriptsObj = pkg.scripts || {};
+      const hasDev = !!scriptsObj.dev;
+      result.suggestions.push({
+        name: pkg.name || path.basename(projectDir),
+        type: hasDev ? 'node-npm-dev' : 'node-npm-start',
+        runtime: '',
+        path: projectDir,
+        cwd: projectDir,
+        args: '',
+        notes: `Detected Node.js project. ${Object.keys(scriptsObj).length ? `npm scripts: ${Object.keys(scriptsObj).join(', ')}` : 'No npm scripts found.'}`,
+        installCommand: files.has('package-lock.json') ? 'npm ci' : 'npm install',
+      });
+    }
+
+    const pyCandidates = ['main.py', 'app.py', 'bot.py', 'server.py', 'index.py'];
+    const pyFile = pyCandidates.find(f => files.has(f)) || Array.from(files).find(f => f.endsWith('.py'));
+    if (pyFile || files.has('requirements.txt') || files.has('pyproject.toml')) {
+      result.suggestions.push({
+        name: path.basename(projectDir),
+        type: 'python',
+        runtime: 'python',
+        path: pyFile ? path.join(projectDir, pyFile) : '',
+        cwd: projectDir,
+        args: '',
+        notes: `Detected Python project${pyFile ? ` using ${pyFile}` : ''}.`,
+        installCommand: files.has('requirements.txt') ? 'python -m pip install -r requirements.txt' : 'python -m pip install -e .',
+      });
+    }
+
+    const ps1 = Array.from(files).find(f => f.endsWith('.ps1'));
+    if (ps1) {
+      result.suggestions.push({ name: path.basename(projectDir), type: 'powershell', runtime: 'powershell', path: path.join(projectDir, ps1), cwd: projectDir, args: '', notes: `Detected PowerShell script ${ps1}.` });
+    }
+    const bat = Array.from(files).find(f => f.endsWith('.bat') || f.endsWith('.cmd'));
+    if (bat) {
+      result.suggestions.push({ name: path.basename(projectDir), type: 'batch', runtime: 'cmd', path: path.join(projectDir, bat), cwd: projectDir, args: '', notes: `Detected batch script ${bat}.` });
+    }
+
+    if (!result.suggestions.length) result.warning = 'No common Node/Python/PowerShell/Batch entry file was detected.';
+    return result;
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ── Auto Update Check ────────────────────────────────────────────────────────
+function fetchText(url) {
+  return new Promise((resolve, reject) => {
+    try {
+      const parsed = new URL(url);
+      const lib = parsed.protocol === 'https:' ? require('https') : require('http');
+      const req = lib.get({
+        hostname: parsed.hostname,
+        port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+        path: parsed.pathname + parsed.search,
+        headers: { 'User-Agent': `ScriptManager/${APP_VERSION}`, 'Accept': 'application/json, text/plain;q=0.9, */*;q=0.8' },
+      }, res => {
+        let data = '';
+        res.on('data', d => { data += d; if (data.length > 1024 * 1024) req.destroy(new Error('Response too large')); });
+        res.on('end', () => {
+          if (res.statusCode < 200 || res.statusCode >= 300) reject(new Error(`HTTP ${res.statusCode}`));
+          else resolve(data);
+        });
+      });
+      req.setTimeout(15000, () => req.destroy(new Error('Request timed out')));
+      req.on('error', reject);
+    } catch (e) { reject(e); }
+  });
+}
+
+async function checkForUpdates(customUrl = '') {
+  const settings = loadSettings();
+  const url = (customUrl || settings.updateCheck?.url || '').trim();
+  if (!url) return { ok: false, error: 'No update URL configured. Add a GitHub latest-release API URL or a JSON file with a version field.' };
+  try {
+    const text = await fetchText(url);
+    let latest = '', releaseUrl = '', notes = '';
+    try {
+      const json = JSON.parse(text);
+      latest = json.tag_name || json.version || json.latest || json.name || '';
+      releaseUrl = json.html_url || json.url || json.download_url || '';
+      notes = json.body || json.notes || '';
+    } catch (_) {
+      latest = text.trim().split(/\s+/)[0];
+    }
+    latest = String(latest || '').replace(/^v/i, '');
+    if (!latest) return { ok: false, error: 'Could not find a version in the update response.' };
+    const cmp = compareVersions(latest, APP_VERSION);
+    return { ok: true, current: APP_VERSION, latest, updateAvailable: cmp > 0, releaseUrl, notes: notes.slice(0, 1200) };
+  } catch (e) {
+    return { ok: false, error: e.message, current: APP_VERSION };
+  }
+}
+
 // ── Web UI Server ─────────────────────────────────────────────────────────────
+function getWebUIRuntimeStatus() {
+  const settings = loadSettings().webUI || {};
+  return {
+    configured: !!settings.enabled,
+    running: !!webServer,
+    host: settings.host || '127.0.0.1',
+    port: Number(settings.port) || 3333,
+    token: settings.token || '',
+    url: `http://${settings.host || '127.0.0.1'}:${Number(settings.port) || 3333}`,
+  };
+}
+
+function stopWebUI() {
+  if (webServer) {
+    try { webServer.close(); } catch (_) {}
+    webServer = null;
+  }
+}
+
+function webPage(settings) {
+  const token = escapeHtml(settings.token || '');
+  return `<!doctype html><html><head><meta charset="utf-8"><title>ScriptManager Web</title><style>
+  body{font-family:Segoe UI,Arial,sans-serif;background:#0b0d11;color:#c8d0e0;margin:0;padding:22px} h1{color:#4af0a0} .bar{display:flex;gap:8px;align-items:center;margin-bottom:16px}.card{background:#191c25;border:1px solid #2e3545;border-radius:10px;margin:10px 0;padding:14px}.muted{color:#68738d}.status{font-weight:700}.running{color:#4af0a0}.stopped{color:#ffaa33}.crashed{color:#ff4466}button,input{border-radius:6px;border:1px solid #2e3545;background:#13161d;color:#c8d0e0;padding:8px 10px}button{cursor:pointer}button:hover{border-color:#4af0a0}</style></head><body>
+  <h1>ScriptManager Web Panel</h1><div class="bar"><input id="token" value="${token}" placeholder="Access token" style="width:320px"><button onclick="loadScripts()">Refresh</button><span id="msg" class="muted"></span></div><div id="scripts"></div>
+  <script>
+  const api=(path,opts={})=>fetch(path+(path.includes('?')?'&':'?')+'token='+encodeURIComponent(document.getElementById('token').value),opts).then(r=>r.json());
+  async function action(id,a){const r=await api('/api/scripts/'+id+'/'+a,{method:'POST'});document.getElementById('msg').textContent=r.ok?'OK':(r.error||'Failed');setTimeout(loadScripts,500)}
+  async function loadScripts(){const d=await api('/api/scripts'); const box=document.getElementById('scripts'); if(d.error){box.innerHTML='<div class=card>'+d.error+'</div>';return;} box.innerHTML=(d.scripts||[]).map(s=>'<div class=card><div><b>'+esc(s.name)+'</b> <span class="status '+s.status+'">'+s.status+'</span></div><div class=muted>'+esc(s.path||s.cwd||'')+'</div><p><button onclick="action(\''+s.id+'\',\'start\')">Start</button> <button onclick="action(\''+s.id+'\',\'stop\')">Stop</button> <button onclick="action(\''+s.id+'\',\'restart\')">Restart</button></p></div>').join('')||'<div class=card>No scripts registered.</div>';}
+  function esc(x){return String(x||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  loadScripts();
+  </script></body></html>`;
+}
+
 function startWebUI() {
-  // Read web UI settings from a config file or use defaults
-  const webUIEnabled = false; // Disabled by default for security
-  const webUIPort = 3333;
-  
-  if (!webUIEnabled) return;
-  
+  stopWebUI();
+  const settingsAll = loadSettings();
+  const settings = settingsAll.webUI || {};
+  if (!settings.enabled) return { ok: true, enabled: false };
+  if (!settings.token) {
+    settings.token = require('crypto').randomBytes(18).toString('hex');
+    settingsAll.webUI = settings;
+    saveSettings(settingsAll);
+  }
+  const host = settings.host || '127.0.0.1';
+  const port = Number(settings.port) || 3333;
+
   try {
     const http = require('http');
-    
     webServer = http.createServer((req, res) => {
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      
-      if (req.url === '/api/scripts' && req.method === 'GET') {
-        res.end(JSON.stringify({ scripts, groups }));
-      } else if (req.url.startsWith('/api/scripts/') && req.method === 'POST') {
-        const scriptId = req.url.split('/')[3];
-        const action = req.url.split('/')[4];
-        
-        if (action === 'start') {
-          const result = startScript(scriptId);
-          res.end(JSON.stringify(result));
-        } else if (action === 'stop') {
-          const result = stopScript(scriptId);
-          res.end(JSON.stringify(result));
-        } else if (action === 'restart') {
-          const result = restartScript(scriptId);
-          res.end(JSON.stringify(result));
-        } else {
-          res.statusCode = 404;
-          res.end(JSON.stringify({ error: 'Unknown action' }));
-        }
-      } else if (req.url === '/api/stats' && req.method === 'GET') {
-        res.end(JSON.stringify(statsCache));
-      } else {
-        res.statusCode = 404;
-        res.end(JSON.stringify({ error: 'Not found' }));
+      const parsed = new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`);
+      const token = parsed.searchParams.get('token') || req.headers['x-scriptmanager-token'];
+      const sendJson = (code, payload) => {
+        res.writeHead(code, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, X-ScriptManager-Token' });
+        res.end(JSON.stringify(payload));
+      };
+      if (req.method === 'OPTIONS') return sendJson(204, {});
+      if (parsed.pathname === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(webPage(settings));
+        return;
       }
+      if (token !== settings.token) return sendJson(401, { ok: false, error: 'Unauthorized' });
+
+      if (parsed.pathname === '/api/scripts' && req.method === 'GET') {
+        return sendJson(200, { ok: true, scripts, groups, stats: statsCache });
+      }
+      const match = parsed.pathname.match(/^\/api\/scripts\/([^/]+)\/(start|stop|restart|deps)$/);
+      if (match && req.method === 'POST') {
+        const [, scriptId, action] = match;
+        const result = action === 'start' ? startScript(scriptId)
+          : action === 'stop' ? stopScript(scriptId)
+          : action === 'restart' ? restartScript(scriptId)
+          : installDependencies(scriptId);
+        return sendJson(result.ok ? 200 : 400, result);
+      }
+      if (parsed.pathname === '/api/stats' && req.method === 'GET') return sendJson(200, { ok: true, stats: statsCache });
+      sendJson(404, { ok: false, error: 'Not found' });
     });
-    
-    webServer.listen(webUIPort, '127.0.0.1', () => {
-      console.log(`Web UI running on http://127.0.0.1:${webUIPort}`);
-    });
+    webServer.on('error', e => console.error('Failed to start web UI:', e.message));
+    webServer.listen(port, host, () => console.log(`Web UI running on http://${host}:${port}`));
+    return { ok: true, enabled: true, host, port, token: settings.token };
   } catch (e) {
-    console.error('Failed to start web UI:', e.message);
+    webServer = null;
+    return { ok: false, error: e.message };
   }
 }
 
@@ -1539,6 +1894,34 @@ function startWebUI() {
 // ── IPC ───────────────────────────────────────────────────────────────────────
 ipcMain.handle('get-scripts', () => scripts);
 ipcMain.handle('get-groups', () => groups);
+
+ipcMain.handle('get-app-version', () => ({ version: APP_VERSION }));
+ipcMain.handle('install-dependencies', (_, scriptId) => installDependencies(scriptId));
+ipcMain.handle('check-dependency-tools', (_, scriptId) => checkDependencyTools(scriptId));
+ipcMain.handle('inspect-project-folder', (_, folder) => inspectProjectFolder(folder));
+ipcMain.handle('check-for-updates', async (_, url) => await checkForUpdates(url));
+ipcMain.handle('get-webui-settings', () => getWebUIRuntimeStatus());
+ipcMain.handle('save-webui-settings', (_, cfg) => {
+  const settings = loadSettings();
+  const oldToken = settings.webUI?.token || '';
+  settings.webUI = {
+    enabled: !!cfg.enabled,
+    host: (cfg.host || '127.0.0.1').trim(),
+    port: Math.max(1, Math.min(65535, parseInt(cfg.port, 10) || 3333)),
+    token: (cfg.token || oldToken || require('crypto').randomBytes(18).toString('hex')).trim(),
+  };
+  saveSettings(settings);
+  const r = startWebUI();
+  return { ok: r.ok !== false, ...getWebUIRuntimeStatus(), error: r.error };
+});
+ipcMain.handle('generate-webui-token', () => ({ token: require('crypto').randomBytes(18).toString('hex') }));
+ipcMain.handle('get-update-settings', () => loadSettings().updateCheck || {});
+ipcMain.handle('save-update-settings', (_, cfg) => {
+  const settings = loadSettings();
+  settings.updateCheck = { enabled: !!cfg.enabled, url: (cfg.url || '').trim() };
+  saveSettings(settings);
+  return { ok: true, updateCheck: settings.updateCheck };
+});
 
 ipcMain.handle('add-group', (_, data) => {
   const group = {
@@ -1888,14 +2271,37 @@ ipcMain.handle('get-log-file-path', (_, scriptId) => {
   return path.join(LOGS_DIR, `${safeName}-${scriptId}.log`);
 });
 
-ipcMain.handle('clear-log-file', (_, scriptId) => {
-  const logPath = path.join(LOGS_DIR, `${getScript(scriptId)?.name.replace(/[^a-zA-Z0-9_-]/g, '_')}-${scriptId}.log`);
-  
-  if (fs.existsSync(logPath)) {
-    fs.writeFileSync(logPath, '');
-    return { ok: true };
+ipcMain.handle('read-log-file', (_, { scriptId, maxLines = 1000 }) => {
+  const script = getScript(scriptId);
+  if (!script) return { ok: false, error: 'Script not found' };
+  const safeName = script.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const logPath = path.join(LOGS_DIR, `${safeName}-${scriptId}.log`);
+  if (!fs.existsSync(logPath)) return { ok: true, path: logPath, lines: [] };
+  try {
+    const raw = fs.readFileSync(logPath, 'utf8');
+    const lines = raw.split(/\r?\n/).filter(Boolean).slice(-Math.max(1, Math.min(10000, Number(maxLines) || 1000)));
+    return { ok: true, path: logPath, lines };
+  } catch (e) {
+    return { ok: false, error: e.message };
   }
-  return { ok: false };
+});
+
+ipcMain.handle('clear-log-file', (_, scriptId) => {
+  const script = getScript(scriptId);
+  if (!script) return { ok: false, error: 'Script not found' };
+  const safeName = script.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const logPath = path.join(LOGS_DIR, `${safeName}-${scriptId}.log`);
+  try {
+    if (scriptLogFiles[scriptId]) {
+      scriptLogFiles[scriptId].end();
+      delete scriptLogFiles[scriptId];
+    }
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+    fs.writeFileSync(logPath, '');
+    return { ok: true, path: logPath };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
 });
 
 // ── Window controls ───────────────────────────────────────────────────────────
@@ -1932,7 +2338,14 @@ ipcMain.handle('export-log', async (_, { scriptName, logText }) => {
 // ── Config file paths ────────────────────────────────────────────────────────
 ipcMain.handle('get-config-paths', () => ({
   dataFile:  DATA_FILE,
+  groupsFile: GROUPS_FILE,
+  templatesFile: TEMPLATES_FILE,
+  profilesFile: PROFILES_FILE,
+  collectionsFile: COLLECTIONS_FILE,
+  settingsFile: SETTINGS_FILE,
+  statsHistoryFile: STATS_HISTORY_FILE,
   backupDir: BACKUP_DIR,
+  logsDir: LOGS_DIR,
   dataDir:   DATA_DIR,
 }));
 
