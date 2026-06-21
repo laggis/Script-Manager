@@ -1825,12 +1825,52 @@ function webPage(settings) {
   const token = escapeHtml(settings.token || '');
   return `<!doctype html><html><head><meta charset="utf-8"><title>ScriptManager Web</title><style>
   body{font-family:Segoe UI,Arial,sans-serif;background:#0b0d11;color:#c8d0e0;margin:0;padding:22px} h1{color:#4af0a0} .bar{display:flex;gap:8px;align-items:center;margin-bottom:16px}.card{background:#191c25;border:1px solid #2e3545;border-radius:10px;margin:10px 0;padding:14px}.muted{color:#68738d}.status{font-weight:700}.running{color:#4af0a0}.stopped{color:#ffaa33}.crashed{color:#ff4466}button,input{border-radius:6px;border:1px solid #2e3545;background:#13161d;color:#c8d0e0;padding:8px 10px}button{cursor:pointer}button:hover{border-color:#4af0a0}</style></head><body>
-  <h1>ScriptManager Web Panel</h1><div class="bar"><input id="token" value="${token}" placeholder="Access token" style="width:320px"><button onclick="loadScripts()">Refresh</button><span id="msg" class="muted"></span></div><div id="scripts"></div>
+  <h1>ScriptManager Web Panel</h1><div class="bar"><input id="token" value="${token}" placeholder="Access token" style="width:320px"><button id="refresh" type="button">Refresh</button><span id="msg" class="muted"></span></div><div id="scripts"><div class="card muted">Loading scripts...</div></div>
   <script>
-  const api=(path,opts={})=>fetch(path+(path.includes('?')?'&':'?')+'token='+encodeURIComponent(document.getElementById('token').value),opts).then(r=>r.json());
-  async function action(id,a){const r=await api('/api/scripts/'+id+'/'+a,{method:'POST'});document.getElementById('msg').textContent=r.ok?'OK':(r.error||'Failed');setTimeout(loadScripts,500)}
-  async function loadScripts(){const d=await api('/api/scripts'); const box=document.getElementById('scripts'); if(d.error){box.innerHTML='<div class=card>'+d.error+'</div>';return;} box.innerHTML=(d.scripts||[]).map(s=>'<div class=card><div><b>'+esc(s.name)+'</b> <span class="status '+s.status+'">'+s.status+'</span></div><div class=muted>'+esc(s.path||s.cwd||'')+'</div><p><button onclick="action(\''+s.id+'\',\'start\')">Start</button> <button onclick="action(\''+s.id+'\',\'stop\')">Stop</button> <button onclick="action(\''+s.id+'\',\'restart\')">Restart</button></p></div>').join('')||'<div class=card>No scripts registered.</div>';}
+  const tokenInput=document.getElementById('token');
+  const message=document.getElementById('msg');
+  const scriptsBox=document.getElementById('scripts');
+  const api=async(path,opts={})=>{
+    const separator=path.includes('?')?'&':'?';
+    const response=await fetch(path+separator+'token='+encodeURIComponent(tokenInput.value),opts);
+    const data=await response.json();
+    if(!response.ok&&!data.error)data.error='Request failed ('+response.status+')';
+    return data;
+  };
+  async function action(id,name){
+    message.textContent='Working...';
+    try{
+      const result=await api('/api/scripts/'+encodeURIComponent(id)+'/'+name,{method:'POST'});
+      message.textContent=result.ok?'OK':(result.error||'Failed');
+      await loadScripts();
+    }catch(error){
+      message.textContent=error.message||'Request failed';
+    }
+  }
+  async function loadScripts(){
+    scriptsBox.innerHTML='<div class="card muted">Loading scripts...</div>';
+    try{
+      const data=await api('/api/scripts');
+      if(data.error){
+        scriptsBox.innerHTML='<div class="card">'+esc(data.error)+'</div>';
+        return;
+      }
+      scriptsBox.innerHTML=(data.scripts||[]).map(script=>{
+        const status=String(script.status||'stopped');
+        const id=esc(script.id);
+        return '<div class="card"><div><b>'+esc(script.name)+'</b> <span class="status '+esc(status)+'">'+esc(status)+'</span></div><div class="muted">'+esc(script.path||script.cwd||'')+'</div><p><button type="button" data-id="'+id+'" data-action="start">Start</button> <button type="button" data-id="'+id+'" data-action="stop">Stop</button> <button type="button" data-id="'+id+'" data-action="restart">Restart</button></p></div>';
+      }).join('')||'<div class="card">No scripts registered.</div>';
+    }catch(error){
+      scriptsBox.innerHTML='<div class="card">Could not load scripts: '+esc(error.message||error)+'</div>';
+    }
+  }
   function esc(x){return String(x||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  document.getElementById('refresh').addEventListener('click',loadScripts);
+  scriptsBox.addEventListener('click',event=>{
+    const button=event.target.closest('button[data-action]');
+    if(button)action(button.dataset.id,button.dataset.action);
+  });
+  tokenInput.addEventListener('keydown',event=>{if(event.key==='Enter')loadScripts()});
   loadScripts();
   </script></body></html>`;
 }
