@@ -1362,14 +1362,17 @@ async function init() {
   window.api.onStatusUpdate(({ scriptId, status, pid, crashCount, startedAt, exitCode }) => {
     const s = scripts.find(x => x.id === scriptId);
     if (s) {
-      // Mark as 'crashed' if it stopped with a non-zero exit code
-      const crashed = status === 'stopped' && exitCode !== undefined && exitCode !== 0 && exitCode !== null;
-      s.status = crashed ? 'crashed' : status;
+      // The main process knows whether an exit was intentional. Trust its
+      // status so Windows taskkill exit codes are not shown as crashes.
+      s.status = status;
       s.pid = pid || null;
       if (crashCount !== undefined) s.crashCount = crashCount;
       if (startedAt)  s.startedAt = startedAt;
       if (exitCode !== undefined) s.lastExitCode = exitCode;
-      if (status === 'stopped' || crashed) { s.startedAt = null; delete statsCache[scriptId]; }
+      if (status === 'stopped' || status === 'crashed') {
+        s.startedAt = null;
+        delete statsCache[scriptId];
+      }
     }
     renderAll();
     updateConInputState();

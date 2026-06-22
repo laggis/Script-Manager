@@ -657,8 +657,9 @@ function startScript(scriptId) {
     delete processes[scriptId];
     delete statsCache[scriptId]; // remove stale snapshot
     const crashed = !wasIntentional && code !== 0 && code !== null;
-    script.status = 'stopped';
+    script.status = crashed ? 'crashed' : 'stopped';
     script.pid    = null;
+    script.lastExitCode = crashed ? code : null;
     if (crashed) {
       script.crashCount = (script.crashCount || 0) + 1;
       script.lastCrash  = Date.now();
@@ -666,7 +667,13 @@ function startScript(scriptId) {
     script.lastStopped = Date.now();
     saveScripts();
     appendLog(scriptId, `■ Exited — code ${code}  (${crashed ? '💥 crash' : '✓ clean'})\n`);
-    send('status-update', { scriptId, status: 'stopped', exitCode: code, crashCount: script.crashCount });
+    send('status-update', {
+      scriptId,
+      status: script.status,
+      exitCode: crashed ? code : null,
+      crashCount: script.crashCount,
+      crashed,
+    });
     updateTrayMenu();
 
     if (crashed) notify(`💥 ${script.name} crashed`, `Exit code ${code}. ${script.autoRestart !== 'never' ? 'Restarting…' : ''}`);
