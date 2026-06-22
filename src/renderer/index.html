@@ -550,7 +550,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
         <!-- Windows Startup toggle row -->
         <div style="background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">🚀 Run on Windows Startup</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">🚀 Run with Windows</div>
             <div id="startup-status-text" style="font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono);">Checking…</div>
             <div id="startup-dev-warning" style="display:none;font-size:11px;color:var(--warn);margin-top:3px;font-family:var(--font-mono);">⚠ Only available in the packaged .exe</div>
           </div>
@@ -2715,14 +2715,23 @@ async function loadStartupState() {
   tgl.style.pointerEvents = 'auto';
   cb.disabled = false;
   cb.checked = r.enabled;
-  updateStartupUI(r.enabled);
+  updateStartupUI(r.enabled, r.mode);
+  if (!r.enabled && r.legacyEnabled) {
+    txt.textContent = 'Old login-only startup detected — enable this again to upgrade';
+    txt.style.color = 'var(--warn)';
+  }
 }
 
-function updateStartupUI(enabled) {
+function updateStartupUI(enabled, mode = 'disabled') {
   const txt = document.getElementById('startup-status-text');
   if (enabled) {
-    txt.textContent = 'Enabled — launches with Windows';
-    txt.style.color = 'var(--accent)';
+    if (mode === 'boot') {
+      txt.textContent = 'Enabled — starts in background at Windows boot';
+      txt.style.color = 'var(--accent)';
+    } else {
+      txt.textContent = 'Enabled — starts when this Windows user signs in';
+      txt.style.color = 'var(--warn)';
+    }
   } else {
     txt.textContent = 'Disabled';
     txt.style.color = 'var(--muted)';
@@ -2738,8 +2747,12 @@ async function setStartup(enable) {
 
   const r = await window.api.setStartupEnabled(enable);
   if (r.ok) {
-    updateStartupUI(r.enabled);
+    updateStartupUI(r.enabled, r.mode);
     cb.checked = r.enabled;
+    if (r.warning) {
+      txt.textContent = r.warning;
+      txt.style.color = 'var(--warn)';
+    }
   } else {
     txt.textContent = '✕ Failed: ' + (r.error || 'Unknown error');
     txt.style.color = 'var(--danger)';

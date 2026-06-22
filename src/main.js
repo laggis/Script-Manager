@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, nativeImage, Notification } = require('electron');
 const path  = require('path');
 const fs    = require('fs');
-const { spawn, execSync } = require('child_process');
+const { spawn, execSync, execFileSync } = require('child_process');
 
 // ── Windows PATH fix ──────────────────────────────────────────────────────────
 // Electron on Windows can launch with a stripped PATH missing node, python, git.
@@ -36,13 +36,45 @@ let statsHistory = {}; // scriptId -> [{timestamp, cpu, mem}]
 let statsCache   = {}; // scriptId -> latest {cpu, mem, uptime} snapshot
 let fileWatchers = {}; // scriptId -> FSWatcher
 let portMonitors = {}; // scriptId -> interval
+const IS_BACKGROUND = process.argv.includes('--background');
+const IS_STARTUP = process.argv.includes('--startup');
+const QUIT_FOR_UPDATE = '--quit-for-update';
+
+// Keep one ScriptManager instance per Windows session. The installer launches
+// the installed EXE with --quit-for-update; that second launch forwards the
+// request here so the running tray instance can stop children and exit cleanly.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv) => {
+    if (argv.includes(QUIT_FOR_UPDATE)) {
+      app.isQuitting = true;
+      app.quit();
+      return;
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
 
 // ── Data file location ───────────────────────────────────────────────────────
 // In production (.exe) → same folder as the exe so it's easy to find & back up.
 // In dev (npm start)   → project root, so it doesn't pollute AppData.
-const DATA_DIR  = app.isPackaged
-  ? path.dirname(app.getPath('exe'))
-  : path.join(__dirname, '..');
+// electron-builder's portable target runs the inner app from a temporary
+// extraction folder. Its PORTABLE_EXECUTABLE_* variables point back to the
+// real portable EXE, which is where persistent config must live.
+const INSTALLED_DATA_DIR = path.join(
+  process.env.ProgramData || process.env.ALLUSERSPROFILE || 'C:\\ProgramData',
+  'ScriptManager'
+);
+const DATA_DIR = process.env.PORTABLE_EXECUTABLE_DIR
+  ? process.env.PORTABLE_EXECUTABLE_DIR
+  : app.isPackaged
+    ? INSTALLED_DATA_DIR
+    : path.join(__dirname, '..');
 const DATA_FILE   = path.join(DATA_DIR, 'scripts.json');
 const GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
 const TEMPLATES_FILE = path.join(DATA_DIR, 'templates.json');
@@ -56,6 +88,37 @@ const ICON_PATH   = path.join(__dirname, '../assets/icon.ico');
 const ICON_PNG    = path.join(__dirname, '../assets/icon.png');
 const TRAY_16     = path.join(__dirname, '../assets/tray-16.png');
 const TRAY_32     = path.join(__dirname, '../assets/tray-32.png');
+
+function migrateLegacyData() {
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (_) {}
+  if (!app.isPackaged || process.env.PORTABLE_EXECUTABLE_DIR) return;
+
+  const legacyDirs = [
+    path.dirname(app.getPath('exe')),
+    process.env.LOCALAPPDATA
+      ? path.join(process.env.LOCALAPPDATA, 'Programs', 'ScriptManager')
+      : null,
+  ].filter(Boolean);
+  const files = [
+    'scripts.json', 'groups.json', 'templates.json', 'profiles.json',
+    'collections.json', 'settings.json', 'stats-history.json',
+  ];
+
+  for (const sourceDir of [...new Set(legacyDirs)]) {
+    if (path.resolve(sourceDir) === path.resolve(DATA_DIR)) continue;
+    for (const name of files) {
+      const source = path.join(sourceDir, name);
+      const target = path.join(DATA_DIR, name);
+      try {
+        if (!fs.existsSync(target) && fs.existsSync(source)) {
+          fs.copyFileSync(source, target);
+        }
+      } catch (_) {}
+    }
+  }
+}
+
+migrateLegacyData();
 
 const APP_VERSION = (() => {
   try { return require('../package.json').version || app.getVersion(); }
@@ -288,7 +351,9 @@ function createWindow() {
   mainWindow.webContents.session.clearCache();
   
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  mainWindow.once('ready-to-show', () => {
+    if (!IS_STARTUP) mainWindow.show();
+  });
 
   // Hide to tray instead of closing
   mainWindow.on('close', async (e) => {
@@ -384,6 +449,7 @@ app.commandLine.appendSwitch('media-cache-size', '0');
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  if (!gotSingleInstanceLock) return;
   loadScripts();
   loadGroups();
   loadTemplates();
@@ -392,8 +458,13 @@ app.whenReady().then(() => {
   loadStatsHistory();
   // Reset statuses (were running before app closed)
   scripts.forEach(s => { s.status = 'stopped'; s.pid = null; });
-  createWindow();
-  createTray();
+  // A boot task runs in Windows session 0, where no interactive desktop or
+  // system tray exists. Keep the process manager and web UI alive without
+  // attempting to create desktop UI in that mode.
+  if (!IS_BACKGROUND) {
+    createWindow();
+    createTray();
+  }
   // Auto-start scripts (respecting dependencies)
   startScriptsWithDependencies();
   // Re-schedule cron
@@ -2466,13 +2537,48 @@ ipcMain.handle('open-in-explorer', (_, filePath) => {
 });
 
 // ── Windows startup (run on boot) ────────────────────────────────────────────
-// Electron's getLoginItemSettings is unreliable on Windows — it ignores the
-// StartupApproved\Run key that Task Manager uses to block startup items.
-// We bypass it entirely and use reg.exe to read/write the registry directly.
+// HKCU\...\Run only starts after a user logs in. Servers often reboot without
+// an interactive login, so use a SYSTEM scheduled task triggered at boot.
+const STARTUP_TASK_NAME = 'ScriptManager Boot';
 const STARTUP_REG_KEY  = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 const STARTUP_REG_NAME = 'ScriptManager';
+const STARTUP_LAUNCHER_NAME = 'ScriptManager.vbs';
 
-function getStartupEnabledFromRegistry() {
+function getStartupLauncherPath() {
+  return path.join(
+    app.getPath('appData'),
+    'Microsoft',
+    'Windows',
+    'Start Menu',
+    'Programs',
+    'Startup',
+    STARTUP_LAUNCHER_NAME
+  );
+}
+
+function getStartupLauncherEnabled() {
+  return fs.existsSync(getStartupLauncherPath());
+}
+
+function createStartupLauncher(exePath) {
+  const launcherPath = getStartupLauncherPath();
+  fs.mkdirSync(path.dirname(launcherPath), { recursive: true });
+  // WScript launches the background process without briefly opening a console.
+  const command = `"${exePath}" --startup`;
+  const vbsCommand = command.replace(/"/g, '""');
+  const contents = [
+    'Set shell = CreateObject("WScript.Shell")',
+    `shell.Run "${vbsCommand}", 0, False`,
+    '',
+  ].join('\r\n');
+  fs.writeFileSync(launcherPath, contents, 'utf8');
+}
+
+function removeStartupLauncher() {
+  try { fs.unlinkSync(getStartupLauncherPath()); } catch (_) {}
+}
+
+function hasLegacyStartupRegistryEntry() {
   try {
     const out = execSync(
       `reg query "${STARTUP_REG_KEY}" /v "${STARTUP_REG_NAME}"`,
@@ -2484,31 +2590,157 @@ function getStartupEnabledFromRegistry() {
   }
 }
 
+function getStartupTaskEnabled() {
+  try {
+    execFileSync('schtasks.exe', ['/Query', '/TN', STARTUP_TASK_NAME], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function psQuote(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function runElevatedPowerShell(script) {
+  const resultFile = path.join(app.getPath('temp'), `scriptmanager-startup-result-${process.pid}-${Date.now()}.txt`);
+  const innerCommand = [
+    `$ErrorActionPreference='Stop'`,
+    `try {`,
+    script,
+    `'OK' | Set-Content -LiteralPath ${psQuote(resultFile)} -Encoding UTF8`,
+    `exit 0`,
+    `} catch {`,
+    `($_ | Out-String) | Set-Content -LiteralPath ${psQuote(resultFile)} -Encoding UTF8`,
+    `exit 1`,
+    `}`,
+  ].join(';');
+  const encoded = Buffer.from(innerCommand, 'utf16le').toString('base64');
+  const outerCommand = [
+    `$p=Start-Process -FilePath 'powershell.exe'`,
+    `-ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','${encoded}')`,
+    `-Verb RunAs -Wait -PassThru`,
+    `exit $p.ExitCode`,
+  ].join(' ');
+
+  try {
+    execFileSync('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-Command', outerCommand,
+    ], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+  } catch (e) {
+    let detail = '';
+    try { detail = fs.readFileSync(resultFile, 'utf8').replace(/^\uFEFF/, '').trim(); } catch (_) {}
+    const error = new Error(detail || e.message);
+    error.status = e.status;
+    throw error;
+  } finally {
+    try { fs.unlinkSync(resultFile); } catch (_) {}
+  }
+}
+
+function removeLegacyStartupRegistryEntry() {
+  try {
+    execFileSync('reg.exe', [
+      'delete', STARTUP_REG_KEY, '/v', STARTUP_REG_NAME, '/f',
+    ], { stdio: 'ignore', windowsHide: true });
+  } catch (_) { /* already absent */ }
+}
+
+function createStartupTask(exePath) {
+  const script = [
+    `Import-Module ScheduledTasks`,
+    `$action=New-ScheduledTaskAction -Execute ${psQuote(exePath)} -Argument '--background' -WorkingDirectory ${psQuote(path.dirname(exePath))}`,
+    `$trigger=New-ScheduledTaskTrigger -AtStartup`,
+    `$principal=New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest`,
+    `$settings=New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)`,
+    `Register-ScheduledTask -TaskName ${psQuote(STARTUP_TASK_NAME)} -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'Starts ScriptManager in background mode when Windows boots.' -Force | Out-Null`,
+  ].join(';');
+  runElevatedPowerShell(script);
+}
+
+function deleteStartupTask() {
+  runElevatedPowerShell(
+    `Unregister-ScheduledTask -TaskName ${psQuote(STARTUP_TASK_NAME)} -Confirm:$false -ErrorAction SilentlyContinue`
+  );
+}
+
 ipcMain.handle('get-startup-enabled', () => {
   if (!app.isPackaged) return { enabled: false, devMode: true };
-  return { enabled: getStartupEnabledFromRegistry(), devMode: false };
+  const bootTask = getStartupTaskEnabled();
+  const signInLauncher = getStartupLauncherEnabled();
+  return {
+    enabled: bootTask || signInLauncher,
+    mode: bootTask ? 'boot' : signInLauncher ? 'signin' : 'disabled',
+    legacyEnabled: hasLegacyStartupRegistryEntry(),
+    devMode: false,
+  };
 });
 
 ipcMain.handle('set-startup-enabled', (_, enable) => {
   if (!app.isPackaged) return { ok: false, error: 'Only works in packaged .exe — not in dev mode.' };
   try {
-    const exePath = app.getPath('exe');
+    const exePath = process.env.PORTABLE_EXECUTABLE_FILE || app.getPath('exe');
     if (enable) {
-      execSync(
-        `reg add "${STARTUP_REG_KEY}" /v "${STARTUP_REG_NAME}" /t REG_SZ /d "${exePath}" /f`,
-        { encoding: 'utf8', stdio: 'ignore' }
-      );
-    } else {
+      let bootError = null;
       try {
-        execSync(
-          `reg delete "${STARTUP_REG_KEY}" /v "${STARTUP_REG_NAME}" /f`,
-          { encoding: 'utf8', stdio: 'ignore' }
-        );
-      } catch (_) { /* already absent — that's fine */ }
+        createStartupTask(exePath);
+      } catch (e) {
+        bootError = e;
+      }
+
+      if (getStartupTaskEnabled()) {
+        removeStartupLauncher();
+      } else {
+        // Some managed/server Windows installations deny Task Scheduler
+        // registration even after elevation. The Startup folder is the
+        // reliable no-admin fallback; it runs after this user signs in.
+        createStartupLauncher(exePath);
+      }
+      removeLegacyStartupRegistryEntry();
+
+      const bootTask = getStartupTaskEnabled();
+      const signInLauncher = getStartupLauncherEnabled();
+      if (!bootTask && !signInLauncher) {
+        throw bootError || new Error('Windows rejected both startup methods.');
+      }
+      return {
+        ok: true,
+        enabled: true,
+        mode: bootTask ? 'boot' : 'signin',
+        warning: !bootTask
+          ? 'Windows blocked the boot task, so ScriptManager will start when this user signs in.'
+          : '',
+      };
+    } else {
+      if (getStartupTaskEnabled()) {
+        try { deleteStartupTask(); } catch (_) {}
+      }
+      removeStartupLauncher();
+      removeLegacyStartupRegistryEntry();
+      return {
+        ok: true,
+        enabled: getStartupTaskEnabled() || getStartupLauncherEnabled(),
+        mode: getStartupTaskEnabled() ? 'boot' : getStartupLauncherEnabled() ? 'signin' : 'disabled',
+      };
     }
-    return { ok: true, enabled: getStartupEnabledFromRegistry() };
   } catch (e) {
-    return { ok: false, error: e.message };
+    const canceled = e.status === 1223;
+    const detail = String(e.message || '').replace(/\s+/g, ' ').trim();
+    return {
+      ok: false,
+      error: canceled
+        ? 'Administrator approval was cancelled.'
+        : `Windows could not update the boot task${detail ? `: ${detail}` : ''}`,
+    };
   }
 });
 

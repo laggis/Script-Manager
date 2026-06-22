@@ -1,6 +1,6 @@
 {
   "name": "scriptmanager",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Desktop manager for Node.js and Python scripts on Windows",
   "main": "src/main.js",
   "scripts": {
@@ -50,10 +50,13 @@
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ScriptManager"
+      "shortcutName": "ScriptManager",
+      "include": "build/installer.nsh"
     },
     "portable": {
       "artifactName": "ScriptManager-Portable-${version}.exe"
