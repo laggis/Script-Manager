@@ -59,5 +59,25 @@
         "v": "development"
       }
     ]
+  },
+  {
+    "id": "dotnet-web-api",
+    "name": "ASP.NET Core Web API",
+    "type": "csharp",
+    "runtime": "dotnet",
+    "notes": "C#/.NET web API project. Run dotnet restore first.",
+    "healthCheckEnabled": true,
+    "healthCheckType": "http",
+    "healthCheckUrl": "http://localhost:5000/health",
+    "env": [
+      {
+        "k": "ASPNETCORE_ENVIRONMENT",
+        "v": "Development"
+      },
+      {
+        "k": "ASPNETCORE_URLS",
+        "v": "http://localhost:5000"
+      }
+    ]
   }
 ]

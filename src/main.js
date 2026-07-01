@@ -66,14 +66,10 @@ if (!gotSingleInstanceLock) {
 // electron-builder's portable target runs the inner app from a temporary
 // extraction folder. Its PORTABLE_EXECUTABLE_* variables point back to the
 // real portable EXE, which is where persistent config must live.
-const INSTALLED_DATA_DIR = path.join(
-  process.env.ProgramData || process.env.ALLUSERSPROFILE || 'C:\\ProgramData',
-  'ScriptManager'
-);
 const DATA_DIR = process.env.PORTABLE_EXECUTABLE_DIR
   ? process.env.PORTABLE_EXECUTABLE_DIR
   : app.isPackaged
-    ? INSTALLED_DATA_DIR
+    ? path.dirname(app.getPath('exe'))
     : path.join(__dirname, '..');
 const DATA_FILE   = path.join(DATA_DIR, 'scripts.json');
 const GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
@@ -94,7 +90,8 @@ function migrateLegacyData() {
   if (!app.isPackaged || process.env.PORTABLE_EXECUTABLE_DIR) return;
 
   const legacyDirs = [
-    path.dirname(app.getPath('exe')),
+    path.join(process.env.ProgramData || process.env.ALLUSERSPROFILE || 'C:\\ProgramData', 'ScriptManager'),
+    process.env.APPDATA ? path.join(process.env.APPDATA, 'ScriptManager') : null,
     process.env.LOCALAPPDATA
       ? path.join(process.env.LOCALAPPDATA, 'Programs', 'ScriptManager')
       : null,
@@ -103,6 +100,7 @@ function migrateLegacyData() {
     'scripts.json', 'groups.json', 'templates.json', 'profiles.json',
     'collections.json', 'settings.json', 'stats-history.json',
   ];
+  const dirs = ['logs', 'scripts-backups'];
 
   for (const sourceDir of [...new Set(legacyDirs)]) {
     if (path.resolve(sourceDir) === path.resolve(DATA_DIR)) continue;
@@ -112,6 +110,15 @@ function migrateLegacyData() {
       try {
         if (!fs.existsSync(target) && fs.existsSync(source)) {
           fs.copyFileSync(source, target);
+        }
+      } catch (_) {}
+    }
+    for (const name of dirs) {
+      const source = path.join(sourceDir, name);
+      const target = path.join(DATA_DIR, name);
+      try {
+        if (!fs.existsSync(target) && fs.existsSync(source)) {
+          fs.cpSync(source, target, { recursive: true });
         }
       } catch (_) {}
     }
@@ -232,6 +239,17 @@ function loadTemplates() {
           healthCheckType: 'http',
           healthCheckUrl: 'http://localhost:5000/health',
           env: [{ k: 'FLASK_APP', v: 'app.py' }, { k: 'FLASK_ENV', v: 'development' }]
+        },
+        {
+          id: 'dotnet-web-api',
+          name: 'ASP.NET Core Web API',
+          type: 'csharp',
+          runtime: 'dotnet',
+          notes: 'C#/.NET web API project. Run dotnet restore first.',
+          healthCheckEnabled: true,
+          healthCheckType: 'http',
+          healthCheckUrl: 'http://localhost:5000/health',
+          env: [{ k: 'ASPNETCORE_ENVIRONMENT', v: 'Development' }]
         }
       ];
       saveTemplates();
@@ -605,17 +623,21 @@ function startScript(scriptId) {
   (script.env || []).forEach(({ k, v }) => { if (k) extraEnv[k] = v; });
 
   // Determine the working directory.
-  // For npm types: cwd is REQUIRED (it's where package.json lives).
+  // For project types: cwd is REQUIRED (it's where package.json/.csproj lives).
   //   Priority: explicit cwd field > dirname of path field > fail with helpful message.
   // For file-based types: cwd defaults to the script file's own folder.
   const isNpmType = ['node-npm-start', 'node-npm-dev'].includes(script.type);
+  const isDotnetType = script.type === 'csharp';
   let cwd;
   if (script.cwd && script.cwd.trim()) {
     cwd = script.cwd.trim();
   } else if (script.path && script.path.trim()) {
-    // For npm types the "path" field is treated as the project folder if no cwd set
     const p = script.path.trim();
-    cwd = isNpmType ? p : path.dirname(p);
+    const pathIsDir = (() => {
+      try { return fs.existsSync(p) && fs.statSync(p).isDirectory(); }
+      catch (_) { return false; }
+    })();
+    cwd = isNpmType ? p : (isDotnetType && pathIsDir ? p : path.dirname(p));
   } else {
     appendLog(scriptId, '[ERROR] No path or working directory set. Please edit the script and set at least a Working Directory.\n');
     return { ok: false, error: 'No path or working directory' };
@@ -640,6 +662,18 @@ function startScript(scriptId) {
     cmd = 'npm'; args = ['start'];
   } else if (script.type === 'node-npm-dev') {
     cmd = 'npm'; args = ['run', 'dev'];
+  } else if (script.type === 'csharp') {
+    cmd = script.runtime || 'dotnet';
+    const extraArgs = script.args ? script.args.trim().split(/\s+/) : [];
+    const scriptPath = script.path ? script.path.trim() : '';
+    const ext = path.extname(scriptPath).toLowerCase();
+    if (ext === '.dll') {
+      args = [scriptPath, ...extraArgs];
+    } else if (['.csproj', '.fsproj', '.vbproj'].includes(ext)) {
+      args = ['run', '--project', scriptPath, ...extraArgs];
+    } else {
+      args = ['run', ...extraArgs];
+    }
   } else {
     if (script.type === 'exe') {
       // Run the .exe directly — no interpreter wrapper needed
@@ -650,6 +684,7 @@ function startScript(scriptId) {
         ['python','discord-python'].includes(script.type) ? 'python' :
         script.type === 'batch'      ? 'cmd' :
         script.type === 'powershell' ? 'powershell' :
+        script.type === 'csharp'     ? 'dotnet' :
         script.type === 'bun'        ? 'bun' :
         script.type === 'deno'       ? 'deno' : 'node'
       );
@@ -1718,6 +1753,9 @@ function detectDependencyPlan(script) {
   const packageLock = path.join(cwd, 'package-lock.json');
   const requirements = path.join(cwd, 'requirements.txt');
   const pyproject = path.join(cwd, 'pyproject.toml');
+  const dotnetProject = fs.existsSync(cwd)
+    ? fs.readdirSync(cwd).find(f => ['.csproj', '.fsproj', '.vbproj', '.sln'].includes(path.extname(f).toLowerCase()))
+    : null;
 
   if (fs.existsSync(packageJson) || ['node', 'discord-node', 'node-npm-start', 'node-npm-dev', 'bun', 'deno'].includes(script.type)) {
     const command = fs.existsSync(packageLock) ? 'npm ci' : 'npm install';
@@ -1732,7 +1770,11 @@ function detectDependencyPlan(script) {
     return { ok: true, type: 'python', cwd, command, reason: fs.existsSync(requirements) ? 'requirements.txt found' : 'Python project detected' };
   }
 
-  return { ok: false, error: 'No supported dependency file found. Expected package.json, requirements.txt, or pyproject.toml.' };
+  if (dotnetProject || script.type === 'csharp') {
+    return { ok: true, type: 'dotnet', cwd, command: 'dotnet restore', reason: dotnetProject ? `${dotnetProject} found` : '.NET project detected' };
+  }
+
+  return { ok: false, error: 'No supported dependency file found. Expected package.json, requirements.txt, pyproject.toml, or a .NET project file.' };
 }
 
 function installDependencies(scriptId) {
@@ -1761,7 +1803,11 @@ function checkDependencyTools(scriptId) {
   const plan = detectDependencyPlan(script);
   const tools = [];
   const cmd = process.platform === 'win32' ? 'where' : 'which';
-  const names = plan.type === 'python' ? ['python', 'pip'] : ['node', 'npm'];
+  const names = plan.type === 'python'
+    ? ['python', 'pip']
+    : plan.type === 'dotnet'
+      ? ['dotnet']
+      : ['node', 'npm'];
   for (const name of names) {
     try {
       const found = execSync(`${cmd} ${name}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim().split(/\r?\n/)[0];
@@ -1814,6 +1860,21 @@ function inspectProjectFolder(projectDir) {
       });
     }
 
+    const dotnetProject = Array.from(files).find(f => ['.csproj', '.fsproj', '.vbproj'].includes(path.extname(f).toLowerCase()));
+    const solution = Array.from(files).find(f => path.extname(f).toLowerCase() === '.sln');
+    if (dotnetProject || solution) {
+      result.suggestions.push({
+        name: dotnetProject ? path.basename(dotnetProject, path.extname(dotnetProject)) : path.basename(projectDir),
+        type: 'csharp',
+        runtime: 'dotnet',
+        path: dotnetProject ? path.join(projectDir, dotnetProject) : '',
+        cwd: projectDir,
+        args: '',
+        notes: dotnetProject ? `Detected C#/.NET project ${dotnetProject}.` : `Detected .NET solution ${solution}.`,
+        installCommand: 'dotnet restore',
+      });
+    }
+
     const ps1 = Array.from(files).find(f => f.endsWith('.ps1'));
     if (ps1) {
       result.suggestions.push({ name: path.basename(projectDir), type: 'powershell', runtime: 'powershell', path: path.join(projectDir, ps1), cwd: projectDir, args: '', notes: `Detected PowerShell script ${ps1}.` });
@@ -1823,7 +1884,7 @@ function inspectProjectFolder(projectDir) {
       result.suggestions.push({ name: path.basename(projectDir), type: 'batch', runtime: 'cmd', path: path.join(projectDir, bat), cwd: projectDir, args: '', notes: `Detected batch script ${bat}.` });
     }
 
-    if (!result.suggestions.length) result.warning = 'No common Node/Python/PowerShell/Batch entry file was detected.';
+    if (!result.suggestions.length) result.warning = 'No common Node/Python/C#/.NET/PowerShell/Batch entry file was detected.';
     return result;
   } catch (e) {
     return { ok: false, error: e.message };
@@ -2426,7 +2487,7 @@ ipcMain.handle('clear-log-file', (_, scriptId) => {
 ipcMain.handle('browse-file', async () => {
   const r = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
-    filters: [{ name: 'Scripts', extensions: ['js','py','mjs','ts','sh','bat','ps1','exe'] }, { name: 'All', extensions: ['*'] }],
+    filters: [{ name: 'Scripts', extensions: ['js','py','mjs','ts','sh','bat','ps1','cs','csproj','sln','dll','exe'] }, { name: 'All', extensions: ['*'] }],
   });
   return r.canceled ? null : r.filePaths[0];
 });

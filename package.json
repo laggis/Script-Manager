@@ -1,7 +1,7 @@
 {
   "name": "scriptmanager",
   "version": "1.6.1",
-  "description": "Desktop manager for Node.js and Python scripts on Windows",
+  "description": "Desktop manager for Node.js, Python, and C#/.NET scripts on Windows",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",

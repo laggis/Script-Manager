@@ -125,6 +125,7 @@ table.st td{padding:9px 16px;font-size:12px;vertical-align:middle;}
 .tb{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--font-mono);}
 .tb-node{background:rgba(247,223,30,.1);color:var(--node);border:1px solid rgba(247,223,30,.2);}
 .tb-python{background:rgba(59,157,224,.1);color:var(--python);border:1px solid rgba(59,157,224,.2);}
+.tb-csharp{background:rgba(152,195,121,.1);color:#98c379;border:1px solid rgba(152,195,121,.2);}
 .tb-shell{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
 .tb-batch{background:rgba(255,170,51,.1);color:var(--warn);border:1px solid rgba(255,170,51,.2);}
 .tb-other{background:rgba(90,100,128,.1);color:var(--muted);border:1px solid rgba(90,100,128,.2);}
@@ -711,7 +712,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 
     <div class="scard">
       <h3>About ScriptManager</h3>
-      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Local desktop manager for Node.js, Python, Batch and PowerShell scripts on Windows — no Docker, no containers. Minimises to system tray. Scripts are stored next to the .exe so they are easy to back up and move between machines.</p>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Local desktop manager for Node.js, Python, C#/.NET, Batch and PowerShell scripts on Windows — no Docker, no containers. Minimises to system tray. Scripts are stored next to the .exe so they are easy to back up and move between machines.</p>
     </div>
 
     <div class="scard">
@@ -862,6 +863,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
             <option value="">All types</option>
             <option value="node">Node.js</option>
             <option value="python">Python</option>
+            <option value="csharp">C# / .NET</option>
             <option value="batch">Batch</option>
             <option value="powershell">PowerShell</option>
           </select>
@@ -898,6 +900,9 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
               <option value="node">Node.js App</option>
               <option value="node-npm-start">Node.js App (npm start)</option>
               <option value="node-npm-dev">Node.js App (npm run dev)</option>
+            </optgroup>
+            <optgroup label="C# / .NET">
+              <option value="csharp">C# / .NET Project</option>
             </optgroup>
             <optgroup label="Windows">
               <option value="batch">Batch File (.bat)</option>
@@ -946,7 +951,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
               <option>bun</option><option value="deno run">deno run</option>
             </optgroup>
             <optgroup label="Other">
-              <option>bash</option><option>sh</option><option>powershell</option><option>cmd</option>
+              <option>bash</option><option>sh</option><option>powershell</option><option>cmd</option><option>dotnet</option>
             </optgroup>
           </select>
           <div class="hint">e.g. python3.12</div>
@@ -1284,7 +1289,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
           <button class="btn btn-ghost btn-sm" id="wiz-browse">Browse</button>
           <button class="btn btn-primary btn-sm" id="wiz-detect">Detect</button>
         </div>
-        <div class="hint">The wizard detects package.json, requirements.txt, main.py, app.py, .ps1, .bat and similar files.</div>
+        <div class="hint">The wizard detects package.json, requirements.txt, .csproj, main.py, app.py, .ps1, .bat and similar files.</div>
       </div>
       <div class="msect" style="margin-top:16px;">2. Detected setup</div>
       <div id="wiz-results" style="border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:12px;min-height:120px;color:var(--muted);font-size:12px;">Select a folder and click Detect.</div>
@@ -1313,6 +1318,7 @@ const TYPES = {
   'discord-python':{label:'Discord Bot',cat:'python',rt:'python'},
   'discord-node':  {label:'Discord Bot',cat:'node',  rt:'node'},
   'python':        {label:'Python',     cat:'python', rt:'python'},
+  'csharp':        {label:'C# / .NET',  cat:'csharp', rt:'dotnet'},
   'node':          {label:'Node.js',    cat:'node',   rt:'node'},
   'node-npm-start':{label:'npm start',  cat:'node',   rt:''},
   'node-npm-dev':  {label:'npm run dev',cat:'node',   rt:''},
@@ -1323,7 +1329,7 @@ const TYPES = {
   'deno':          {label:'Deno',       cat:'node',   rt:'deno run'},
   'exe':           {label:'Executable', cat:'batch',  rt:''},
 };
-const catBadge = c => ({python:'tb-python',node:'tb-node',shell:'tb-shell',batch:'tb-batch'}[c]||'tb-other');
+const catBadge = c => ({python:'tb-python',csharp:'tb-csharp',node:'tb-node',shell:'tb-shell',batch:'tb-batch'}[c]||'tb-other');
 const typeLabel = t => TYPES[t]?.label || t;
 const typeBadge = t => catBadge(TYPES[t]?.cat);
 
@@ -1817,6 +1823,7 @@ function onTypeChange() {
   if (meta?.rt !== undefined) document.getElementById('f-runtime').value = meta.rt;
 
   const isNpm = NPM_TYPES.includes(type);
+  const isDotnet = type === 'csharp';
 
   // Path field: hidden for npm types (not needed), shown for others
   const fgPath  = document.getElementById('fg-path');
@@ -1826,15 +1833,24 @@ function onTypeChange() {
   const fCwd    = document.getElementById('f-cwd');
   if (!fgPath || !fPath || !lblCwd || !hintCwd || !fCwd) return; // modal not yet in DOM
 
-  if (isNpm) {
+  if (isNpm || isDotnet) {
     // npm types only need the project folder — no file path required
-    fgPath.style.display = 'none';
+    fgPath.style.display = isNpm ? 'none' : '';
     lblCwd.innerHTML = 'Project Folder <span style="color:var(--danger);font-size:11px;font-weight:700;">* Required</span>';
     hintCwd.innerHTML = `
       <span style="color:var(--warn);">📁 Browse to the folder that contains your <span style="font-family:var(--font-mono);color:var(--accent);">package.json</span></span><br>
       e.g. <span style="font-family:var(--font-mono);color:var(--accent);">C:\\bots\\myproject</span> (where package.json lives)<br>
       <span style="color:var(--muted);">This becomes the working directory for npm.</span>`;
-    fCwd.placeholder = 'C:\bots\myproject  (folder with package.json)';
+    if (isDotnet) {
+      hintCwd.innerHTML = `
+      <span style="color:var(--warn);">Browse to the folder that contains your <span style="font-family:var(--font-mono);color:var(--accent);">.csproj</span></span><br>
+      e.g. <span style="font-family:var(--font-mono);color:var(--accent);">C:\\apps\\my-dotnet-api</span><br>
+      <span style="color:var(--muted);">Uses dotnet run, or dotnet run --project when a project file is selected.</span>`;
+      fCwd.placeholder = 'C:\\apps\\my-dotnet-api  (folder with .csproj)';
+      fPath.placeholder = 'C:\\apps\\my-dotnet-api\\MyApi.csproj';
+    } else {
+      fCwd.placeholder = 'C:\\bots\\myproject  (folder with package.json)';
+    }
   } else {
     fgPath.style.display = '';
     lblCwd.innerHTML = 'Working Directory <span style="color:var(--muted);font-size:10px;font-weight:400;">(optional)</span>';
@@ -1861,7 +1877,6 @@ function updateARHint() {
 document.getElementById('btn-add-script').addEventListener('click', ()=>openModal());
 document.getElementById('modal-x').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
-document.getElementById('modal-overlay').addEventListener('click', e=>{if(e.target===e.currentTarget)closeModal();});
 document.getElementById('btn-browse-file').addEventListener('click', async()=>{
   const p = await window.api.browseFile();
   if (p) document.getElementById('f-path').value = p;
@@ -3383,6 +3398,28 @@ const MK_TEMPLATES = [
     }
   },
   {
+    id: 'aspnet-core-api',
+    name: 'ASP.NET Core API',
+    author: 'ScriptManager',
+    description: 'C#/.NET web API project with dotnet restore support, dotnet run launch, and HTTP health checks.',
+    type: 'csharp',
+    tags: ['csharp', 'dotnet', 'api', 'web'],
+    stars: 342,
+    script: {
+      name: 'ASP.NET Core API',
+      type: 'csharp',
+      runtime: 'dotnet',
+      notes: 'ASP.NET Core project. Run dotnet restore first, then point path to your .csproj or set the project folder.',
+      autoRestart: true,
+      cronEnabled: false,
+      healthCheckEnabled: true,
+      healthCheckType: 'http',
+      healthCheckUrl: 'http://localhost:5000/health',
+      healthCheckInterval: 30,
+      env: [{ key: 'ASPNETCORE_ENVIRONMENT', value: 'Development' }, { key: 'ASPNETCORE_URLS', value: 'http://localhost:5000' }]
+    }
+  },
+  {
     id: 'db-backup-cron',
     name: 'Daily DB Backup',
     author: 'ScriptManager',
@@ -3508,10 +3545,10 @@ const MK_TEMPLATES = [
 let mkFilteredTemplates = [...MK_TEMPLATES];
 
 function mkTypeLabel(type) {
-  return { node:'Node.js', python:'Python', batch:'Batch', powershell:'PowerShell' }[type] || type;
+  return { node:'Node.js', python:'Python', csharp:'C# / .NET', batch:'Batch', powershell:'PowerShell' }[type] || type;
 }
 function mkTypeColor(type) {
-  return { node:'#68d391', python:'#f6e05e', batch:'#fc8181', powershell:'#76e4f7' }[type] || 'var(--muted)';
+  return { node:'#68d391', python:'#f6e05e', csharp:'#98c379', batch:'#fc8181', powershell:'#76e4f7' }[type] || 'var(--muted)';
 }
 
 function mkRenderGrid(templates) {

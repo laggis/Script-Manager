@@ -1,6 +1,6 @@
 # ScriptManager v1.5
 
-Desktop manager for Node.js, Python, Batch and PowerShell scripts on Windows.
+Desktop manager for Node.js, Python, C#/.NET, Batch and PowerShell scripts on Windows.
 Minimises to system tray — scripts keep running in the background.
 
 ---
@@ -114,7 +114,7 @@ All data is stored **next to the `.exe`** (or in the project root during dev), m
 
 | Feature | Details |
 |---|---|
-| **Script types** | Discord Bot, Python, Node.js, npm start/dev, Batch, PowerShell, Shell, Bun, Deno, Executable |
+| **Script types** | Discord Bot, Python, C#/.NET, Node.js, npm start/dev, Batch, PowerShell, Shell, Bun, Deno, Executable |
 | **Script groups** | Organize scripts into custom categories with colors |
 | **Script collections** | Bundle scripts and launch or stop them all at once; drag to reorder |
 | **Profiles** | Save dev/prod/staging environment configs per script and switch instantly |
@@ -124,7 +124,7 @@ All data is stored **next to the `.exe`** (or in the project root during dev), m
 | **Port monitor trigger** | Auto-restart if a monitored port goes down |
 | **Analytics** | CPU & RAM history charts per script — 1h, 6h, 24h or 7d view |
 | **Notifications** | SMTP email, Discord, Slack, and custom webhook alerts on crash or health fail |
-| **Runtime selector** | python3.12, node18, bun, deno run, custom, etc. |
+| **Runtime selector** | python3.12, node18, dotnet, bun, deno run, custom, etc. |
 | **Auto-restart** | Never / On Failure / Always |
 | **Auto-start** | Start scripts automatically when ScriptManager opens |
 | **Cron schedule** | Standard 5-part cron expressions (uses `node-cron`) |
@@ -191,6 +191,6 @@ This build adds the requested features:
 - Better Logs page with search, filters, tail size, saved log loading, open log file, clear memory log, and clear saved log file.
 - Full Backup / Restore for scripts, groups, templates, profiles, collections, settings, stats history, script files, and logs.
 - Update Checker that can check a GitHub latest-release API URL or a simple plain-text/JSON version URL.
-- Setup Wizard that detects common Node.js, Python, PowerShell, and batch projects from a selected folder.
+- Setup Wizard that detects common Node.js, Python, C#/.NET, PowerShell, and batch projects from a selected folder.
 
 Security note: keep the Remote Web Panel on `127.0.0.1` unless you are exposing it only through a firewall, VPN, or reverse proxy with extra authentication.
