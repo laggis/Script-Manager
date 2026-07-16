@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, nativeImage, Notificati
 const path  = require('path');
 const fs    = require('fs');
 const { spawn, execSync, execFileSync } = require('child_process');
+const { getProcessStats, clearProcessStats } = require('./process-stats');
 
 // ── Windows PATH fix ──────────────────────────────────────────────────────────
 // Electron on Windows can launch with a stripped PATH missing node, python, git.
@@ -26,6 +27,9 @@ let processes  = {};   // scriptId -> { process, startedAt }
 let scripts    = [];
 let cronJobs   = {};   // scriptId -> cron task
 let statsTimer = null;
+let statsHistoryTimer = null;
+let statsPollRunning = false;
+let lastStatsErrorAt = 0;
 let healthCheckTimers = {};  // scriptId -> interval timer
 let groups     = [];   // Array of group objects { id, name, color }
 let templates  = [];   // Script templates
@@ -39,6 +43,19 @@ let portMonitors = {}; // scriptId -> interval
 const IS_BACKGROUND = process.argv.includes('--background');
 const IS_STARTUP = process.argv.includes('--startup');
 const QUIT_FOR_UPDATE = '--quit-for-update';
+
+// ── Performance-friendly monitoring defaults ─────────────────────────────────
+// Statistics are collected in one batch and never overlap. Five seconds keeps
+// the UI responsive while avoiding the heavy WMI/WMIC polling used by older builds.
+const STATS_POLL_INTERVAL_MS = 5 * 1000;
+const STATS_INITIAL_DELAY_MS = 1500;
+const STATS_HISTORY_INTERVAL_MS = 60 * 1000;
+const STATS_HISTORY_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_STATS_HISTORY_POINTS = 7 * 24 * 60; // one point/minute for seven days
+const RESOURCE_LIMIT_COOLDOWN_MS = 60 * 1000;
+const RAPID_CRASH_WINDOW_MS = 60 * 1000;
+const MAX_AUTO_RESTART_DELAY_MS = 60 * 1000;
+const resourceLimitState = {};
 
 // Keep one ScriptManager instance per Windows session. The installer launches
 // the installed EXE with --quit-for-update; that second launch forwards the
@@ -289,6 +306,7 @@ function loadStatsHistory() {
   try {
     if (fs.existsSync(STATS_HISTORY_FILE)) {
       statsHistory = JSON.parse(fs.readFileSync(STATS_HISTORY_FILE, 'utf8'));
+      compactAllStatsHistory();
     }
   } catch { statsHistory = {}; }
 }
@@ -320,6 +338,7 @@ function saveSettings(settings) {
 }
 
 function saveStatsHistory() {
+  compactAllStatsHistory();
   fs.writeFileSync(STATS_HISTORY_FILE, JSON.stringify(statsHistory, null, 2));
 }
 
@@ -487,11 +506,11 @@ app.whenReady().then(() => {
   startScriptsWithDependencies();
   // Re-schedule cron
   scripts.forEach(s => { if (s.cronEnabled && s.cronSchedule) scheduleCron(s); });
-  // CPU/RAM polling every 3s
-  statsTimer = setInterval(() => {
-    pollStats();
-    recordStatsHistory();
-  }, 3000);
+  // Start non-overlapping, batched CPU/RAM monitoring.
+  startStatsPolling();
+  // History does not need the same refresh rate as the live UI. One point per
+  // minute keeps seven-day charts lightweight and the history file small.
+  statsHistoryTimer = setInterval(recordStatsHistory, STATS_HISTORY_INTERVAL_MS);
   // Start health checks for scripts that have them enabled
   scripts.forEach(s => { if (s.healthCheckEnabled) startHealthCheck(s.id); });
   // Start log rotation check (daily)
@@ -523,7 +542,9 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   app.isQuitting = true;
-  if (statsTimer) { clearInterval(statsTimer); statsTimer = null; }
+  if (statsTimer) { clearTimeout(statsTimer); statsTimer = null; }
+  if (statsHistoryTimer) { clearInterval(statsHistoryTimer); statsHistoryTimer = null; }
+  clearProcessStats();
   // Clear all health check timers
   Object.values(healthCheckTimers).forEach(timer => clearInterval(timer));
   healthCheckTimers = {};
@@ -542,6 +563,7 @@ app.on('before-quit', () => {
   // Reset all statuses so they don't show as running on next launch
   scripts.forEach(s => { s.status = 'stopped'; s.pid = null; });
   saveScripts();
+  try { saveStatsHistory(); } catch (_) { /* non-fatal during shutdown */ }
 });
 app.on('window-all-closed', () => { /* keep running in tray until Quit is clicked */ });
 
@@ -559,56 +581,126 @@ function notify(title, body) {
 }
 
 // ── CPU / RAM polling ─────────────────────────────────────────────────────────
-async function pollStats() {
-  let pidusage;
-  try { pidusage = require('pidusage'); } catch { return; }
+function startStatsPolling() {
+  const tick = async () => {
+    if (app.isQuitting) return;
 
-  const entries = Object.entries(processes);
-  for (const [scriptId, entry] of entries) {
-    try {
-      const stat = await pidusage(entry.process.pid);
+    await pollStats();
+
+    // setTimeout is intentionally used instead of setInterval. The next poll
+    // starts only after the current one has completed, so slow queries can never
+    // stack up and create a CPU spike.
+    if (!app.isQuitting) {
+      statsTimer = setTimeout(tick, STATS_POLL_INTERVAL_MS);
+    }
+  };
+
+  statsTimer = setTimeout(tick, STATS_INITIAL_DELAY_MS);
+}
+
+async function pollStats() {
+  if (statsPollRunning) return;
+
+  const entries = Object.entries(processes).filter(([, entry]) =>
+    entry && entry.process && Number.isInteger(Number(entry.process.pid))
+  );
+
+  if (entries.length === 0) {
+    clearProcessStats();
+    return;
+  }
+
+  statsPollRunning = true;
+
+  try {
+    const pids = [...new Set(entries.map(([, entry]) => Number(entry.process.pid)))];
+    const statsByPid = await getProcessStats(pids);
+
+    for (const [scriptId, entry] of entries) {
+      const pid = Number(entry.process.pid);
+      const stat = statsByPid[pid] || statsByPid[String(pid)];
+      if (!stat) continue; // process may have exited during the batch
+
       const script = getScript(scriptId);
-      
+      const cpu = Math.max(0, Number(stat.cpu) || 0);
+      const memoryBytes = Math.max(0, Number(stat.memory) || 0);
+      const memoryMb = Math.round(memoryBytes / 1024 / 1024);
+
       const statPayload = {
         scriptId,
-        cpu: stat.cpu.toFixed(1),
-        mem: Math.round(stat.memory / 1024 / 1024),  // MB
+        cpu: cpu.toFixed(1),
+        mem: memoryMb,
         uptime: Date.now() - entry.startedAt,
       };
-      send('stats-update', statPayload);
 
-      // Cache latest snapshot so recordStatsHistory() can persist it
+      send('stats-update', statPayload);
       statsCache[scriptId] = statPayload;
 
-      // Check resource limits
-      if (script && script.resourceLimitsEnabled) {
-        let violated = false;
-        let reason = '';
+      checkResourceLimits(scriptId, script, cpu, memoryMb);
+    }
+  } catch (error) {
+    // Avoid filling the console if process collection temporarily fails. A
+    // single warning per minute is enough for troubleshooting.
+    const now = Date.now();
+    if (now - lastStatsErrorAt >= 60 * 1000) {
+      lastStatsErrorAt = now;
+      console.warn('[STATS]', error?.message || error);
+    }
+  } finally {
+    statsPollRunning = false;
+  }
+}
 
-        if (script.cpuLimit && stat.cpu > script.cpuLimit) {
-          violated = true;
-          reason = `CPU ${stat.cpu.toFixed(1)}% > ${script.cpuLimit}%`;
-        }
-        if (script.memLimit && (stat.memory / 1024 / 1024) > script.memLimit) {
-          violated = true;
-          reason = `RAM ${Math.round(stat.memory / 1024 / 1024)}MB > ${script.memLimit}MB`;
-        }
+function checkResourceLimits(scriptId, script, cpu, memoryMb) {
+  if (!script || !script.resourceLimitsEnabled) {
+    delete resourceLimitState[scriptId];
+    return;
+  }
 
-        if (violated) {
-          appendLog(scriptId, `[RESOURCE LIMIT] ${reason}\n`);
-          notify(`⚠️ ${script.name}`, `Resource limit exceeded: ${reason}`);
-          
-          if (script.resourceAction === 'restart') {
-            appendLog(scriptId, `[AUTO-ACTION] Restarting due to resource limit violation\n`);
-            restartScript(scriptId);
-          } else if (script.resourceAction === 'stop') {
-            appendLog(scriptId, `[AUTO-ACTION] Stopping due to resource limit violation\n`);
-            stopScript(scriptId);
-          }
-          // alert-only does nothing except log and notify
-        }
-      }
-    } catch { /* process may have just died */ }
+  const reasons = [];
+  const violationTypes = [];
+  const cpuLimit = Number(script.cpuLimit);
+  const memLimit = Number(script.memLimit);
+
+  if (Number.isFinite(cpuLimit) && cpuLimit > 0 && cpu > cpuLimit) {
+    reasons.push(`CPU ${cpu.toFixed(1)}% > ${cpuLimit}%`);
+    violationTypes.push('cpu');
+  }
+  if (Number.isFinite(memLimit) && memLimit > 0 && memoryMb > memLimit) {
+    reasons.push(`RAM ${memoryMb}MB > ${memLimit}MB`);
+    violationTypes.push('memory');
+  }
+
+  if (reasons.length === 0) {
+    delete resourceLimitState[scriptId];
+    return;
+  }
+
+  const reason = reasons.join(', ');
+  const signature = violationTypes.join(',');
+  const now = Date.now();
+  const previous = resourceLimitState[scriptId];
+
+  // Do not spam notifications or launch repeated restart/stop actions while the
+  // same threshold remains exceeded.
+  if (
+    previous &&
+    previous.signature === signature &&
+    now - previous.timestamp < RESOURCE_LIMIT_COOLDOWN_MS
+  ) {
+    return;
+  }
+
+  resourceLimitState[scriptId] = { signature, timestamp: now };
+  appendLog(scriptId, `[RESOURCE LIMIT] ${reason}\n`);
+  notify(`⚠️ ${script.name}`, `Resource limit exceeded: ${reason}`);
+
+  if (script.resourceAction === 'restart') {
+    appendLog(scriptId, '[AUTO-ACTION] Restarting due to resource limit violation\n');
+    restartScript(scriptId);
+  } else if (script.resourceAction === 'stop') {
+    appendLog(scriptId, '[AUTO-ACTION] Stopping due to resource limit violation\n');
+    stopScript(scriptId);
   }
 }
 
@@ -710,14 +802,31 @@ function startScript(scriptId) {
 
   let proc;
   try {
-    // On Windows with shell:true, passing an array of args can cause them to be
-    // silently dropped by CMD. Build a single quoted command string instead.
     if (process.platform === 'win32') {
-      const quotedArgs = args.map(a => a.includes(' ') ? `"${a}"` : a);
-      const fullCmd = [cmd, ...quotedArgs].join(' ');
-      proc = spawn(fullCmd, [], {
-        cwd, shell: true, env: childEnv, windowsHide: true,
-      });
+      // Start normal runtimes directly so ScriptManager tracks the actual Node,
+      // Python, .NET or executable process instead of an intermediate cmd.exe.
+      // npm scripts, batch files and multi-word custom runtimes still need CMD.
+      const commandNeedsShell =
+        ['node-npm-start', 'node-npm-dev', 'batch'].includes(script.type) ||
+        (typeof cmd === 'string' && /\s/.test(cmd.trim()) && !fs.existsSync(cmd));
+
+      if (commandNeedsShell) {
+        const quotedArgs = args.map(a => /[\s&|<>^]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a);
+        const fullCmd = [cmd, ...quotedArgs].join(' ');
+        proc = spawn(fullCmd, [], {
+          cwd,
+          shell: true,
+          env: childEnv,
+          windowsHide: true,
+        });
+      } else {
+        proc = spawn(cmd, args, {
+          cwd,
+          shell: false,
+          env: childEnv,
+          windowsHide: true,
+        });
+      }
     } else {
       proc = spawn(cmd, args, { cwd, shell: true, env: childEnv });
     }
@@ -762,6 +871,7 @@ function startScript(scriptId) {
     const wasIntentional = processes[scriptId]?.intentionallyStopped || app.isQuitting;
     delete processes[scriptId];
     delete statsCache[scriptId]; // remove stale snapshot
+    delete resourceLimitState[scriptId];
     const crashed = !wasIntentional && code !== 0 && code !== null;
     script.status = crashed ? 'crashed' : 'stopped';
     script.pid    = null;
@@ -786,8 +896,31 @@ function startScript(scriptId) {
 
     const ar = script.autoRestart;
     if (!app.isQuitting && (ar === 'always' || (ar === 'on-failure' && crashed))) {
-      appendLog(scriptId, `↻ Auto-restarting in 3 s (mode: ${ar})\n`);
-      setTimeout(() => { if (!app.isQuitting) startScript(scriptId); }, 3000);
+      const runtimeMs = Date.now() - startedAt;
+
+      if (crashed && runtimeMs < RAPID_CRASH_WINDOW_MS) {
+        script.rapidCrashCount = (script.rapidCrashCount || 0) + 1;
+      } else {
+        script.rapidCrashCount = 0;
+      }
+
+      const restartDelayMs = crashed
+        ? Math.min(
+            3000 * Math.pow(2, Math.max(0, (script.rapidCrashCount || 1) - 1)),
+            MAX_AUTO_RESTART_DELAY_MS
+          )
+        : 3000;
+
+      const restartDelaySeconds = Math.round(restartDelayMs / 1000);
+      appendLog(
+        scriptId,
+        `↻ Auto-restarting in ${restartDelaySeconds} s (mode: ${ar})\n`
+      );
+      saveScripts();
+
+      setTimeout(() => {
+        if (!app.isQuitting && !processes[scriptId]) startScript(scriptId);
+      }, restartDelayMs);
     }
   });
 
@@ -1159,23 +1292,94 @@ function stopHealthCheck(scriptId) {
 }
 
 // ── Stats History & Analytics ─────────────────────────────────────────────────
+function compactHistorySeries(series, now = Date.now()) {
+  if (!Array.isArray(series) || series.length === 0) return [];
+
+  const cutoff = now - STATS_HISTORY_RETENTION_MS;
+  const minuteBuckets = new Map();
+
+  for (const point of series) {
+    const timestamp = Number(point?.timestamp);
+    if (!Number.isFinite(timestamp) || timestamp <= cutoff) continue;
+
+    const bucketKey = Math.floor(timestamp / STATS_HISTORY_INTERVAL_MS);
+    const cpu = Number(point.cpu) || 0;
+    const mem = Number(point.mem) || 0;
+    const uptime = Number(point.uptime) || 0;
+    const current = minuteBuckets.get(bucketKey);
+
+    if (!current) {
+      minuteBuckets.set(bucketKey, {
+        timestamp,
+        cpuTotal: cpu,
+        cpuCount: 1,
+        memPeak: mem,
+        uptime,
+      });
+      continue;
+    }
+
+    current.timestamp = Math.max(current.timestamp, timestamp);
+    current.cpuTotal += cpu;
+    current.cpuCount += 1;
+    current.memPeak = Math.max(current.memPeak, mem);
+    current.uptime = Math.max(current.uptime, uptime);
+  }
+
+  const compacted = [...minuteBuckets.values()]
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map(bucket => ({
+      timestamp: bucket.timestamp,
+      cpu: Number((bucket.cpuTotal / bucket.cpuCount).toFixed(2)),
+      mem: Math.round(bucket.memPeak),
+      uptime: bucket.uptime,
+    }));
+
+  return compacted.slice(-MAX_STATS_HISTORY_POINTS);
+}
+
+function compactAllStatsHistory() {
+  const now = Date.now();
+  for (const scriptId of Object.keys(statsHistory || {})) {
+    const compacted = compactHistorySeries(statsHistory[scriptId], now);
+    if (compacted.length > 0) statsHistory[scriptId] = compacted;
+    else delete statsHistory[scriptId];
+  }
+}
+
 function recordStatsHistory() {
   const now = Date.now();
-  
-  Object.entries(statsCache).forEach(([scriptId, stats]) => {
+  const cutoff = now - STATS_HISTORY_RETENTION_MS;
+  const currentBucket = Math.floor(now / STATS_HISTORY_INTERVAL_MS);
+
+  for (const [scriptId, stats] of Object.entries(statsCache)) {
     if (!statsHistory[scriptId]) statsHistory[scriptId] = [];
-    
-    statsHistory[scriptId].push({
+    const series = statsHistory[scriptId];
+    const point = {
       timestamp: now,
-      cpu: parseFloat(stats.cpu),
-      mem: parseInt(stats.mem),
-      uptime: stats.uptime
-    });
-    
-    // Keep only last 7 days of data
-    const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
-    statsHistory[scriptId] = statsHistory[scriptId].filter(s => s.timestamp > sevenDaysAgo);
-  });
+      cpu: Number.parseFloat(stats.cpu) || 0,
+      mem: Number.parseInt(stats.mem, 10) || 0,
+      uptime: Number(stats.uptime) || 0,
+    };
+
+    // Keep at most one point for each minute. This also makes the function safe
+    // if it is triggered twice after a system sleep/resume or timer adjustment.
+    const last = series[series.length - 1];
+    if (last && Math.floor(last.timestamp / STATS_HISTORY_INTERVAL_MS) === currentBucket) {
+      series[series.length - 1] = point;
+    } else {
+      series.push(point);
+    }
+
+    let firstValid = 0;
+    while (firstValid < series.length && series[firstValid].timestamp <= cutoff) {
+      firstValid += 1;
+    }
+    if (firstValid > 0) series.splice(0, firstValid);
+    if (series.length > MAX_STATS_HISTORY_POINTS) {
+      series.splice(0, series.length - MAX_STATS_HISTORY_POINTS);
+    }
+  }
 }
 
 // ── Email Notifications ───────────────────────────────────────────────────────

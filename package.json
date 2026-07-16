@@ -1,6 +1,6 @@
 {
   "name": "scriptmanager",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Desktop manager for Node.js, Python, and C#/.NET scripts on Windows",
   "main": "src/main.js",
   "scripts": {
@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "node-cron": "^3.0.3",
-    "nodemailer": "^6.10.1",
-    "pidusage": "^3.0.2"
+    "nodemailer": "^6.10.1"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -21,7 +20,7 @@
   "build": {
     "appId": "com.scriptmanager.app",
     "productName": "ScriptManager",
-    "copyright": "Copyright \u00a9 2024 ScriptManager",
+    "copyright": "Copyright © 2024 ScriptManager",
     "directories": {
       "output": "dist"
     },

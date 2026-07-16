@@ -1,9 +1,18 @@
-# ScriptManager v1.5
+# ScriptManager v1.6.2
 
 Desktop manager for Node.js, Python, C#/.NET, Batch and PowerShell scripts on Windows.
 Minimises to system tray — scripts keep running in the background.
 
 ---
+
+## What's New in v1.6.2
+
+- ✅ **WMI CPU fix** — Windows process statistics no longer launch one WMIC query per managed script
+- ✅ **Batched monitoring** — all running PIDs are collected together every 5 seconds without overlapping polls
+- ✅ **Lightweight history** — analytics are stored once per minute instead of every 3 seconds
+- ✅ **Smaller history files** — old high-frequency history is automatically compacted to minute-sized buckets
+- ✅ **Crash-loop protection** — repeatedly crashing scripts use an increasing restart delay, up to 60 seconds
+- ✅ **Friendlier resource limits** — repeated alerts and restart actions have a cooldown to prevent notification spam
 
 ## What's New in v1.5
 
@@ -32,7 +41,7 @@ Minimises to system tray — scripts keep running in the background.
 - ✅ **Resource Limits & Alerts** — Set CPU/RAM thresholds, auto-restart or stop on limit breach
 - ✅ **Health Checks** — Periodic process or HTTP endpoint checks with auto-recovery
 - ✅ System tray icon with quick start/stop menu
-- ✅ CPU & RAM usage per script (live, every 3s)
+- ✅ CPU & RAM usage per script (live, batched every 5s)
 - ✅ Uptime display per script
 - ✅ Crash counter with colour coding
 - ✅ Git Pull & Restart button
@@ -76,8 +85,8 @@ npm run build
 ```
 
 Output goes to the `dist/` folder:
-- `ScriptManager Setup 1.5.0.exe` — full installer with Start Menu & desktop shortcut
-- `ScriptManager-Portable-1.5.0.exe` — single `.exe`, no install needed
+- `ScriptManager Setup 1.6.2.exe` — full installer with Start Menu & desktop shortcut
+- `ScriptManager-Portable-1.6.2.exe` — single `.exe`, no install needed
 
 ### Portable vs Installer
 | | Portable | Installer |
@@ -129,7 +138,7 @@ All data is stored **next to the `.exe`** (or in the project root during dev), m
 | **Auto-start** | Start scripts automatically when ScriptManager opens |
 | **Cron schedule** | Standard 5-part cron expressions (uses `node-cron`) |
 | **Environment vars** | Per-script `KEY=VALUE` editor |
-| **CPU & RAM** | Live stats updated every 3 seconds (uses `pidusage`) |
+| **CPU & RAM** | Batched live stats every 5 seconds without WMIC/WMI polling |
 | **Uptime** | Live uptime counter per script |
 | **Crash counter** | Counts + highlights repeated crashes; reset button included |
 | **Git integration** | Set repo dir, branch, pull on start, or Pull & Restart in one click |

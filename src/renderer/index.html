@@ -299,7 +299,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
 <div id="titlebar">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 8l3 3-3 3" stroke-width="1.5"/><path d="M13 14h4" stroke-width="1.5"/></svg>
-    ScriptManager <span class="sub">v1.6</span>
+    ScriptManager <span class="sub">v1.6.2</span>
   </div>
   <div class="winbtns">
     <button class="winbtn min"   onclick="window.api.minimize()"></button>
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
     Settings
   </div>
   <div class="sidebar-spacer"></div>
-  <div class="sidebar-footer">ScriptManager v1.6.0</div>
+  <div class="sidebar-footer">ScriptManager v1.6.2</div>
 </div>
 
 <!-- Content -->
@@ -603,7 +603,7 @@ textarea{resize:vertical;min-height:70px;font-family:var(--font-mono);font-size:
           <div><div style="font-size:13px;font-weight:700;color:var(--text);">Enable update checks</div><div style="font-size:11px;color:var(--muted);margin-top:3px;">Manual check button works even if disabled.</div></div>
           <label class="tgl"><input type="checkbox" id="upd-enabled"/><span class="tgl-sl"></span></label>
         </div>
-        <div class="fg"><label>Update URL</label><input type="text" id="upd-url" placeholder="https://api.github.com/repos/OWNER/REPO/releases/latest"/><div class="hint">Response can be GitHub release JSON or plain text like v1.6.1.</div></div>
+        <div class="fg"><label>Update URL</label><input type="text" id="upd-url" placeholder="https://api.github.com/repos/OWNER/REPO/releases/latest"/><div class="hint">Response can be GitHub release JSON or plain text like v1.6.2.</div></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" onclick="saveUpdateSettings()">💾 Save</button><button class="btn btn-ghost btn-sm" onclick="checkUpdatesNow()">🔍 Check Now</button><span id="upd-status" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);"></span></div>
       </div>
     </div>
